@@ -36,11 +36,22 @@ $port
 
 // "SELECT DISTINCT * FROM `trees` order by id desc limit 300"
 
-$sql = "SELECT * FROM trees order by id desc limit 200";
+$sql = "SELECT * FROM trees order by id desc limit 30";
+$sql2 = "SELECT * FROM trees ORDER BY areaName";
+
 $result = mysqli_query($link, $sql);
+$result2 = mysqli_query($link, $sql2);
 
 if (!$result) {
     echo "Ошибка ($sql) from DB: " . mysqli_error();
+    exit;
+}
+else{
+    //echo "подключение";
+}
+
+if (!$result2) {
+    echo "Ошибка ($sql2) from DB: " . mysqli_error();
     exit;
 }
 else{
@@ -77,6 +88,37 @@ while ($row = mysqli_fetch_assoc($result))
 	$treeInfo = $id. " " . $specie . " " . $contractor . " " . $property . " " . $areaName;
 	$treeInfoArray[] = $treeInfo;
 }
+
+$areaNameTemp = "dsadsaddsa";
+while ($row2 = mysqli_fetch_assoc($result2))
+{
+	$areaNameUnique = $row2['areaName'];
+
+	if (strcmp($areaNameUnique, $areaNameTemp) == 0) {
+		
+	} else {
+
+			$lat2 = $row2['lat'];
+			$lon2 = $row2['lon'];
+
+			$point2 = $lat2.",".$lon2;
+			$masspoint2[] = $point2;
+
+			$id2 = "id: " . $row2['id'] . " <br>";
+			$specie2 = "Тип: " . $row2['specie'] . " <br>";
+			$contractor2 = "Подрядчик: ". $row2['contractor'] . " <br>";
+			$property2 = "Категория: " . $row2['property'] . " <br>";
+			$areaName2 = "Место: " . $row2['areaName'] . " <br>";
+
+			$treeInfo2 = $id2. " " . $specie2 . " " . $contractor2 . " " . $property2 . " " . $areaName2;
+			$treeInfoArray2[] = $treeInfo2;
+	}
+	
+	$areaNameTemp = $areaNameUnique;
+
+}
+// echo json_encode($areaName2Array);
+
 // echo  "<div style=margin-left:10px>" . "Координаты парка: " . $masspoint[0] . "</div>";
 // for($i=0;$i<2;$i++){
 //     echo $masspoint[$i]." ";
@@ -149,7 +191,7 @@ while ($row = mysqli_fetch_assoc($result))
 
 
 		<div style="margin-top:5px">
-		<div id="map" style="width: 100%; height:470px"></div>
+		<div id="map" style="width: 100%; height:800px"></div>
 		</div>
 
 	</div>
@@ -161,7 +203,7 @@ while ($row = mysqli_fetch_assoc($result))
 
 	function init() {
 		var myMap = new ymaps.Map("map", {
-			center: [<?php echo $masspoint[0];?>],
+			center: [<?php echo $masspoint2[0];?>],
 			zoom: 16
 		}, {
 			searchControlProvider: 'yandex#search'
@@ -169,11 +211,11 @@ while ($row = mysqli_fetch_assoc($result))
 	
 		var myCollection = new ymaps.GeoObjectCollection(); 
 	
-		<?php for ($i=0;$i<count($masspoint);$i++): ?>
+		<?php for ($i=0;$i<count($masspoint2);$i++): ?>
 		var myPlacemark = new ymaps.Placemark([
-			<?php echo $masspoint[$i]; ?>
+			<?php echo $masspoint2[$i]; ?>
 		], {
-			balloonContent: '<?php echo $treeInfoArray[$i] . "<br>" . "<button>Перейти</button>"  . "<br><br>" ?>'
+			balloonContent: '<?php echo $treeInfoArray2[$i] . "<br>" . "<button>Перейти</button>"  . "<br><br>" ?>'
 		}, {
 			preset: 'islands#icon',
 			iconColor: '#0000ff'
