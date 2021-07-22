@@ -34,12 +34,13 @@ $port
 //     //echo "Успех";
 // }
 
-$sql = "SELECT * FROM `trees` order by id desc limit 200";
-// $result = mysql_query($sql);
+// "SELECT DISTINCT * FROM `trees` order by id desc limit 300"
+
+$sql = "SELECT * FROM trees order by id desc limit 200";
 $result = mysqli_query($link, $sql);
 
 if (!$result) {
-    echo "Ошибка ($sql) from DB: " . mysql_error();
+    echo "Ошибка ($sql) from DB: " . mysqli_error();
     exit;
 }
 else{
@@ -55,8 +56,17 @@ while ($row = mysqli_fetch_assoc($result))
    	$point = $lat.",".$lon;
    	$masspoint[] = $point;
 
+	//for searching 1st row  
    	$idForSearch = $row['id'];
 	$idArray[] = $idForSearch;
+
+	//for 2 option filter area and specie
+	$areaNameOption = $row['areaName'];
+	$specieOption = $row['specie'];
+
+	$areaNameArray[] = $areaNameOption;
+	$specieArray[] = $specieOption;
+
 
 	$id = "id: " . $row['id'] . " <br>";
 	$specie = "Тип: " . $row['specie'] . " <br>";
@@ -96,7 +106,7 @@ while ($row = mysqli_fetch_assoc($result))
                     <input type="search" class="form-control rounded" id="id" placeholder="id" aria-label="Search"
                         aria-describedby="search-addon" />   
 					<button type="button" id="search-addon" class="btn btn-primary ml-1">Поиск</button>
-					<button type="button" id="search-addon" class="btn btn-dark ml-1" >Все деревья</button>
+					<button type="button" id="search-all-tree" class="btn btn-dark ml-1" >Все деревья</button>
                     <!-- <input id="match" /> -->
         </div>
 
@@ -105,19 +115,33 @@ while ($row = mysqli_fetch_assoc($result))
                             <select class="form-control rounded" aria-label="Default select example" id="area">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
                                 <option disabled selected value> -- Выберите место -- </option>
-								<option value="1">Сквер репрессивонных</option>
-                                <option value="2">Площадь победы</option>
-                                <option value="3">Сквер конституции</option>
+								<option value="Сквер репрессивонных">Сквер репрессивонных</option>
+                                <option value="Площадь победы">Площадь победы</option>
+                                <option value="Сквер конституции">Сквер конституции</option>
                             </select>
 							<select class="form-control rounded ml-1" aria-label="Default select example" id="specie">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
                                 <option disabled selected value> -- Выберите тип дерева -- </option>
-								<option value="1">Береза</option>
-                                <option value="2">Клён</option>
-                                <option value="3">Карагач</option>
-								<option value="4">Сосна</option>
-								<option value="4">Ель</option>
-								<option value="5">Береза бородавчатая</option>
+								<option value="Береза">Береза</option>
+                                <option value="Клён">Клён</option>
+                                <option value="Карагач">Карагач</option>
+								<option value="Сосна">Сосна</option>
+								<option value="Ель">Ель</option>
+								<option value="Береза бородавчатая">Береза бородавчатая</option>
+								<option value="Тополь черный">Тополь черный</option>
+								<option value="Яблоня ягодная">Яблоня ягодная</option>
+								<option value="Смородина золотистая">Смородина золотистая</option>
+								<option value="Яблоня">Яблоня</option>
+								<option value="Лиственница">Лиственница</option>
+								<option value="Рябина">Рябина</option>
+								<option value="Ясень">Ясень</option>
+								<option value="Акация">Акация</option>
+								<option value="Тополь серебристый">Тополь серебристый</option>
+								<option value="Вяз крупнолистный">Вяз крупнолистный</option>
+								<option value="Ель колючая">Ель колючая</option>
+								<option value="Клён татарский">Клён татарский</option>
+
+
                             </select> 
                             <button type="button" id="13"  class="btn btn-primary ml-1">Сохранить</button>
                             <!-- <input id="match" /> -->
@@ -175,17 +199,165 @@ while ($row = mysqli_fetch_assoc($result))
 			MapsLoadTreeById(id);
 		}
 		});
+
+		$('#search-all-tree').click(function(){
+			$('#map').empty();
+			init();
+		});
+
+
+		$('#13').click(function(){
+		var area = $('#area').val();
+		var specie = $('#specie').val();
+		console.log(area);
+		console.log(specie);
+		
+		if (area == null && specie == null) {
+
+		} else if (specie == null && area != null) {
+
+			MapsLoadTreeByArea(area);
+
+		} else if (area == null && specie != null) {
+
+			MapsLoadTreeBySpecie(specie);
+		
+		} else 	{
+
+			MapsLoadTreeByAreaSpecie(area, specie);
+		}
+
+		});
+
 	}
 
 	ymaps.ready(init);
 
+	function MapsLoadTreeByAreaSpecie(area, specie){
+		$('#map').empty();
+
+		var myMap = new ymaps.Map("map", {
+			center: [52.269053, 76.961113],
+			zoom: 12
+		}, {
+			searchControlProvider: 'yandex#search'
+		});
+		
+		var myCollection = new ymaps.GeoObjectCollection();
+
+		<?php for ($i=0;$i<count($idArray);$i++): ?>
+			
+			var areaNameConverted = "<?php echo $areaNameArray[$i]; ?>";
+			var specieConverted = "<?php echo $specieArray[$i]; ?>";
+			console.log(areaNameConverted);
+			console.log(specieConverted);
+			
+			if (( (area.localeCompare(areaNameConverted) == 0) && (specie.localeCompare(specieConverted) == 0) ) ||
+			((area.localeCompare(areaNameConverted) == 0 && specie == null ))){
+				
+				var myPlacemark = new ymaps.Placemark([
+					<?php echo $masspoint[$i]; ?>
+				], {
+					balloonContent: '<?php echo $treeInfoArray[$i] . "<br>" . "<button>Перейти</button>"  . "<br><br>" ?>'
+				}, {
+					preset: 'islands#icon',
+					iconColor: '#0000ff'
+				});
+				myCollection.add(myPlacemark);
+			}
+
+		<?php endfor; ?>
+
+		myMap.geoObjects.add(myCollection);
+
+		// Сделаем у карты автомасштаб чтобы были видны все метки.
+		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
+
+	}
+
+	function MapsLoadTreeByArea(area){
+		$('#map').empty();
+
+		var myMap = new ymaps.Map("map", {
+			center: [52.269053, 76.961113],
+			zoom: 12
+		}, {
+			searchControlProvider: 'yandex#search'
+		});
+		
+		var myCollection = new ymaps.GeoObjectCollection();
+
+		<?php for ($i=0;$i<count($idArray);$i++): ?>
+			
+			var areaNameConverted = "<?php echo $areaNameArray[$i]; ?>";
+			console.log(areaNameConverted);
+	
+			
+			if (( (area.localeCompare(areaNameConverted) == 0))){
+				
+				var myPlacemark = new ymaps.Placemark([
+					<?php echo $masspoint[$i]; ?>
+				], {
+					balloonContent: '<?php echo $treeInfoArray[$i] . "<br>" . "<button>Перейти</button>"  . "<br><br>" ?>'
+				}, {
+					preset: 'islands#icon',
+					iconColor: '#0000ff'
+				});
+				myCollection.add(myPlacemark);
+			}
+
+		<?php endfor; ?>
+
+		myMap.geoObjects.add(myCollection);
+
+		// Сделаем у карты автомасштаб чтобы были видны все метки.
+		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
+
+	}
+
+	function MapsLoadTreeBySpecie(specie){
+		$('#map').empty();
+
+		var myMap = new ymaps.Map("map", {
+			center: [52.269053, 76.961113],
+			zoom: 12
+		}, {
+			searchControlProvider: 'yandex#search'
+		});
+		
+		var myCollection = new ymaps.GeoObjectCollection();
+
+		<?php for ($i=0;$i<count($idArray);$i++): ?>
+			
+			var specieConverted = "<?php echo $specieArray[$i]; ?>";
+			console.log(specieConverted);
+	
+			
+			if (( (specie.localeCompare(specieConverted) == 0))){
+				
+				var myPlacemark = new ymaps.Placemark([
+					<?php echo $masspoint[$i]; ?>
+				], {
+					balloonContent: '<?php echo $treeInfoArray[$i] . "<br>" . "<button>Перейти</button>"  . "<br><br>" ?>'
+				}, {
+					preset: 'islands#icon',
+					iconColor: '#0000ff'
+				});
+				myCollection.add(myPlacemark);
+			}
+
+		<?php endfor; ?>
+
+		myMap.geoObjects.add(myCollection);
+
+		// Сделаем у карты автомасштаб чтобы были видны все метки.
+		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
+
+	}
+
 
 	function MapsLoadTreeById(id){
         $('#map').empty();
-
-
-		findedP = " ";
-    
 
 		var myMap = new ymaps.Map("map", {
 			center: [52.269053, 76.961113],
@@ -200,7 +372,6 @@ while ($row = mysqli_fetch_assoc($result))
 		<?php for ($i=0;$i<count($idArray);$i++): ?>
 
 			if (<?php echo $idArray[$i]; ?> == id){
-				findedP =  <?php echo $masspoint[$i]; ?>
 
 				var myPlacemark = new ymaps.Placemark([
 					<?php echo $masspoint[$i]; ?>
@@ -215,8 +386,9 @@ while ($row = mysqli_fetch_assoc($result))
 				<?php endfor; ?>
 			
 			myMap.geoObjects.add(myCollection);
-		
-		
+
+			// Сделаем у карты автомасштаб чтобы были видны все метки.
+		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
     }
 
 	</script>
