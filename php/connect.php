@@ -1,18 +1,20 @@
 <?php
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+$user = 'root';
+$password = 'root';
+$db = 'shopper';
+$host = 'localhost';
+$port = 8889;
 
-	$mysqli=true;
-	function connectDB(){
-		global $mysqli;
-        $mysqli=new mysqli("localhost","root","root","f0497377_nari");
-		// $mysqli=new mysqli("localhost","f0497377","ivkivieric","f0497377_nari");
-		$mysqli->query("SET NAMES 'utf8'");
-		$mysqli->query("SET CHARACTER SET 'utf8'");
-	}
-	function closeDB(){
-		global $mysqli;
-		$mysqli->close();
-
-	}
-	session_start();
-
+$link = mysqli_init();
+$success = mysqli_real_connect(
+	$link, 
+	$host, 
+	$user, 
+	$password, 
+	$db,
+	$port
+);
 ?>

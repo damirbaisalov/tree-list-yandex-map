@@ -1,42 +1,12 @@
 <!doctype html>
 <html lang="en">
-  <head>
-  <?php
-
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+<head>
+<?php
 
 session_start();
-// include('php/connect.php');
+include('php/connect.php');
 
-$user = 'root';
-$password = 'root';
-$db = 'shopper';
-$host = 'localhost';
-$port = 8889;
-
-$link = mysqli_init();
-$success = mysqli_real_connect(
-$link, 
-$host, 
-$user, 
-$password, 
-$db,
-$port
-);
-
-// if (!mysql_select_db("shopper")) {
-//     echo "Ошибка" . mysql_error();
-//     exit;
-// }
-// else{
-//     //echo "Успех";
-// }
-
-// "SELECT DISTINCT * FROM `trees` order by id desc limit 300"
-
-$sql = "SELECT * FROM trees order by id desc limit 30";
+$sql = "SELECT * FROM trees order by id DESC limit 15000";
 $sql2 = "SELECT * FROM trees ORDER BY areaName";
 
 $result = mysqli_query($link, $sql);
@@ -62,8 +32,6 @@ while ($row = mysqli_fetch_assoc($result))
 {
    	$lat = $row['lat'];
    	$lon = $row['lon'];
-   	//echo $lat."</br>";
-   	//echo $lon."</br>";
    	$point = $lat.",".$lon;
    	$masspoint[] = $point;
 
@@ -108,7 +76,10 @@ while ($row2 = mysqli_fetch_assoc($result2))
 			$specie2 = "Тип: " . $row2['specie'] . " <br>";
 			$contractor2 = "Подрядчик: ". $row2['contractor'] . " <br>";
 			$property2 = "Категория: " . $row2['property'] . " <br>";
-			$areaName2 = "Место: " . $row2['areaName'] . " <br>";
+			$areaName2 = $row2['areaName'];
+
+			// $areaName2ForBalloon = $row['areaName'];
+			$areaName2ForBalloonArray[] = $areaName2;
 
 			$treeInfo2 = $id2. " " . $specie2 . " " . $contractor2 . " " . $property2 . " " . $areaName2;
 			$treeInfoArray2[] = $treeInfo2;
@@ -117,12 +88,6 @@ while ($row2 = mysqli_fetch_assoc($result2))
 	$areaNameTemp = $areaNameUnique;
 
 }
-// echo json_encode($areaName2Array);
-
-// echo  "<div style=margin-left:10px>" . "Координаты парка: " . $masspoint[0] . "</div>";
-// for($i=0;$i<2;$i++){
-//     echo $masspoint[$i]." ";
-//   }
 ?>
 
 
@@ -158,8 +123,8 @@ while ($row2 = mysqli_fetch_assoc($result2))
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
                                 <option disabled selected value> -- Выберите место -- </option>
 								<option value="Сквер репрессивонных">Сквер репрессивонных</option>
-                                <option value="Площадь победы">Площадь победы</option>
-                                <option value="Сквер конституции">Сквер конституции</option>
+                                <option value="Площадь Победы">Площадь победы</option>
+                                <option value="Сквер Конституции">Сквер конституции</option>
                             </select>
 							<select class="form-control rounded ml-1" aria-label="Default select example" id="specie">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
@@ -185,7 +150,7 @@ while ($row2 = mysqli_fetch_assoc($result2))
 
 
                             </select> 
-                            <button type="button" id="13"  class="btn btn-primary ml-1">Сохранить</button>
+                            <button type="button" id="13" class="btn btn-primary ml-1">Сохранить</button>
                             <!-- <input id="match" /> -->
         </div> 
 
@@ -208,22 +173,35 @@ while ($row2 = mysqli_fetch_assoc($result2))
 		}, {
 			searchControlProvider: 'yandex#search'
 		});
+
+		firstButton = new ymaps.control.Button("Кнопка");
+		// map.controls.add(firstButton, {float: 'right'});
 	
 		var myCollection = new ymaps.GeoObjectCollection(); 
 	
 		<?php for ($i=0;$i<count($masspoint2);$i++): ?>
+	
 		var myPlacemark = new ymaps.Placemark([
 			<?php echo $masspoint2[$i]; ?>
 		], {
-			balloonContent: '<?php echo $treeInfoArray2[$i] . "<br>" . "<button>Перейти</button>"  . "<br><br>" ?>'
+			hintContent: '<?php echo "Название парка: " . $areaName2ForBalloonArray[$i]; ?>'
 		}, {
+			hasBalloon: false,
 			preset: 'islands#icon',
 			iconColor: '#0000ff'
 		});
-		myCollection.add(myPlacemark);
-		<?php endfor; ?>
 	
+	
+		myCollection.add(myPlacemark);
+		myPlacemark.events.add('click', function () {
+			var areaName = '<?php echo $areaName2ForBalloonArray[$i];?>';
+			MapsLoadTreeByArea(areaName);
+        });
+	
+		<?php endfor; ?>
+
 		myMap.geoObjects.add(myCollection);
+
 		
 		// Сделаем у карты автомасштаб чтобы были видны все метки.
 		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
