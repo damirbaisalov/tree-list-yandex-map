@@ -1,12 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head>
+
 <?php
 
 session_start();
 include('php/connect.php');
 
-$sql = "SELECT * FROM trees order by id DESC limit 15000";
+$sql = "SELECT * FROM trees order by id DESC limit 300";
 $sql2 = "SELECT * FROM trees ORDER BY areaName";
 
 $result = mysqli_query($link, $sql);
@@ -98,6 +99,9 @@ while ($row2 = mysqli_fetch_assoc($result2))
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<!-- <script src="https://code.jquery.com/jquery-1.12.3.min.js" integrity="sha256-aaODHAgvwQW1bFOGXMeX+pC4PZIPsvn2h1sArYOhgXQ=" crossorigin="anonymous"></script> -->
+	<script src="https://code.jquery.com/jquery-1.12.3.min.js" integrity="sha256-aaODHAgvwQW1bFOGXMeX+pC4PZIPsvn2h1sArYOhgXQ=" crossorigin="anonymous"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
     <title>Карта деревьев</title>
   </head>
@@ -154,6 +158,28 @@ while ($row2 = mysqli_fetch_assoc($result2))
                             <!-- <input id="match" /> -->
         </div> 
 
+		<div class="card-body">
+            <table class="table table-hover" >
+                <thead>
+                    <tr>
+                        <th scope="col">Id дерева</th>
+                        <th scope="col">Координаты1</th>
+                        <th scope="col">Координаты2</th>
+                        <th scope="col">Вид</th>
+                        <th scope="col">Название парка</th>
+                        <th scope="col">Property</th>
+                        <th scope="col">Подрядчик</th>
+                        <th scope="col">Возраст дерева</th>
+                        <th scope="col">Grade</th>
+                        <th scope="col">Удалить</th>
+                    </tr>
+                </thead>
+                <tbody id="searchTree" >
+                               
+                </tbody>
+            </table>
+        </div>
+
 
 		<div style="margin-top:5px">
 		<div id="map" style="width: 100%; height:800px"></div>
@@ -162,6 +188,7 @@ while ($row2 = mysqli_fetch_assoc($result2))
 	</div>
 
 	<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=d811ec43-1783-4052-a752-a52f361f333d" type="text/javascript"></script>
+	<!-- <script src="//code.jquery.com/jquery-1.11.2.min.js"></script> -->
 	<script type="text/javascript">
 	// ymaps.ready(init);
 
@@ -323,6 +350,12 @@ while ($row2 = mysqli_fetch_assoc($result2))
 					iconColor: '#0000ff'
 				});
 				myCollection.add(myPlacemark);
+
+				myPlacemark.events.add('click', function () {
+					var idOfTree  = '<?php echo $idArray[$i];?>';
+					listTreesSelected(idOfTree);
+					console.log(idOfTree);
+        		});
 			}
 
 		<?php endfor; ?>
@@ -410,6 +443,42 @@ while ($row2 = mysqli_fetch_assoc($result2))
 		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
     }
 
+	function deleteRow(btn) {
+            var row = btn.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+            }
+
+	function listTreesSelected(id)
+        {
+            jQuery.ajax({
+                type: 'POST',
+                url: 'php/requests.php',
+                data:{
+                    id: id
+                },
+                success: function(data){
+                    console.log("Tree of park:");
+                    tenantsList = JSON.parse(data);
+                    console.log("Tree of park :"+ tenantsList);
+                        $.each(tenantsList, function(key1, data1){
+                        $('#searchTree').append('<tr>\
+                                                    <td>'+tenantsList[key1].id+'</td>\
+                                                    <td>'+tenantsList[key1].lat+'</td>\
+                                                    <td>'+tenantsList[key1].lon+'</td>\
+                                                    <td>'+tenantsList[key1].specie+'</td>\
+                                                    <td>'+tenantsList[key1].areaName+'</td>\
+                                                    <td>'+tenantsList[key1].property+'</td>\
+                                                    <td>'+tenantsList[key1].contractor+'</td>\
+                                                    <td>'+tenantsList[key1].age+'</td>\
+                                                    <td>'+tenantsList[key1].grade+'</td>\
+													<td><button type="button" class="btn btn-primary" onclick=console.log("вава"+deleteRow(this))>'+"Удалить"+'</button></td>\
+                                                </tr>');						
+                        });     
+                }
+            });
+        }
+    
+
 	</script>
 
 	
@@ -418,8 +487,9 @@ while ($row2 = mysqli_fetch_assoc($result2))
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
 
 
+	<script src="https://code.jquery.com/jquery-1.12.3.min.js" integrity="sha256-aaODHAgvwQW1bFOGXMeX+pC4PZIPsvn2h1sArYOhgXQ=" crossorigin="anonymous"></script>
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
