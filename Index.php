@@ -174,8 +174,6 @@ while ($row2 = mysqli_fetch_assoc($result2))
 			searchControlProvider: 'yandex#search'
 		});
 
-		firstButton = new ymaps.control.Button("Кнопка");
-		// map.controls.add(firstButton, {float: 'right'});
 	
 		var myCollection = new ymaps.GeoObjectCollection(); 
 	
@@ -318,8 +316,9 @@ while ($row2 = mysqli_fetch_assoc($result2))
 				var myPlacemark = new ymaps.Placemark([
 					<?php echo $masspoint[$i]; ?>
 				], {
-					balloonContent: '<?php echo $treeInfoArray[$i] . "<br>" . "<button>Перейти</button>"  . "<br><br>" ?>'
+					hintContent: '<?php echo $treeInfoArray[$i];?>'
 				}, {
+					hasBalloon: false,
 					preset: 'islands#icon',
 					iconColor: '#0000ff'
 				});
