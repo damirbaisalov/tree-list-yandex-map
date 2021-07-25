@@ -170,11 +170,12 @@ while ($row2 = mysqli_fetch_assoc($result2))
                         <th scope="col">Возраст дерева</th>
                         <th scope="col">Grade</th>
 						<th scope="col">Полив</th>
+						<th scope="col">val poliv</th>
                         <th scope="col">Обновить строку</th>
                     </tr>
                 </thead>
                 <tbody id="searchTree" >
-	
+					<td><input class="form-control rounded" id="poliv" placeholder="Полив" aria-label="Send"/></td>
                 </tbody>
             </table>
         </div>
@@ -477,6 +478,7 @@ while ($row2 = mysqli_fetch_assoc($result2))
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].grade+'</td>\
 													<td><input class="form-control rounded" id="poliv" placeholder="Полив" aria-label="Send"/></td>\
+													<td>'+$('#area').val()+'</td>\
 													<td><button type="button" class="btn btn-info" onclick=deleteRow(this,'+tenantsList[key1].id+','+$('#poliv').val()+'); >'+"Обновить"+'</button></td>\
                                                 </tr>');						
                         });    
