@@ -122,7 +122,7 @@ while ($row2 = mysqli_fetch_assoc($result2))
         </div>
 
 
-		<div class="col-8 input-group rounded mb-3" style="margin-top: 10px"  >
+		<div class="col-12 input-group rounded mb-3" style="margin-top: 10px"  >
                             <select class="form-control rounded" aria-label="Default select example" id="area">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
                                 <option disabled selected value> -- Выберите место -- </option>
@@ -155,9 +155,17 @@ while ($row2 = mysqli_fetch_assoc($result2))
 
                             </select> 
                             <button type="button" id="13" class="btn btn-primary ml-1">Сохранить</button>
+
+							<!-- <input type="text" class="form-control rounded ml-5" id="poliv" placeholder="Полив" aria-label="Send"
+                        	/>   
+							<button type="button" id="update-poliv" class="btn btn-primary ml-1">Задать полив</button> -->
                             <!-- <input id="match" /> -->
         </div> 
 
+		<div class="col-8">
+			<input class="form-control rounded" id="poliv" placeholder="Задайте полив" aria-label="Send"/>
+		</div>
+	
 		<div class="card-body">
             <table class="table table-hover" >
                 <thead>
@@ -170,12 +178,10 @@ while ($row2 = mysqli_fetch_assoc($result2))
                         <th scope="col">Возраст дерева</th>
                         <th scope="col">Grade</th>
 						<th scope="col">Полив</th>
-						<th scope="col">val poliv</th>
                         <th scope="col">Обновить строку</th>
                     </tr>
                 </thead>
                 <tbody id="searchTree" >
-					<td><input class="form-control rounded" id="poliv" placeholder="Полив" aria-label="Send"/></td>
                 </tbody>
             </table>
         </div>
@@ -443,8 +449,8 @@ while ($row2 = mysqli_fetch_assoc($result2))
 		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
     }
 
-	function deleteRow(btn , id, poliv ) {
-		console.log(id);
+	function deleteRow(btn , id, poliv) {
+			console.log(id);
 			console.log(poliv);
 			
 			// treeUpdatePoliv(id, polivFromInput);
@@ -477,11 +483,10 @@ while ($row2 = mysqli_fetch_assoc($result2))
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].grade+'</td>\
-													<td><input class="form-control rounded" id="poliv" placeholder="Полив" aria-label="Send"/></td>\
-													<td>'+$('#area').val()+'</td>\
-													<td><button type="button" class="btn btn-info" onclick=deleteRow(this,'+tenantsList[key1].id+','+$('#poliv').val()+'); >'+"Обновить"+'</button></td>\
+													<td>'+tenantsList[key1].poliv+'</td>\
+													<td><button type="button" class="btn btn-info" onclick=deleteRow(this,'+tenantsList[key1].id+',\''+$('#poliv').val()+'\'); >'+"Обновить"+'</button></td>\
                                                 </tr>');						
-                        });    
+                        });
                 }
             });
         }
