@@ -3,9 +3,10 @@
     include('connect.php');
 
     $id = $_POST['id'];
+    $poliv_data = $_POST['poliv'];
     $massiv = Array();
 
-    $sqlTree = "SELECT * FROM trees WHERE id = '$id'";
+    $sqlTree = "UPDATE trees SET poliv='$poliv_data' WHERE id = '$id'";
 
 
     // $result = mysql_query($sqlDomksk) or die (mysql_error());

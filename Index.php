@@ -163,19 +163,18 @@ while ($row2 = mysqli_fetch_assoc($result2))
                 <thead>
                     <tr>
                         <th scope="col">Id дерева</th>
-                        <th scope="col">Координаты1</th>
-                        <th scope="col">Координаты2</th>
                         <th scope="col">Вид</th>
                         <th scope="col">Название парка</th>
                         <th scope="col">Property</th>
                         <th scope="col">Подрядчик</th>
                         <th scope="col">Возраст дерева</th>
                         <th scope="col">Grade</th>
-                        <th scope="col">Удалить</th>
+						<th scope="col">Полив</th>
+                        <th scope="col">Обновить строку</th>
                     </tr>
                 </thead>
                 <tbody id="searchTree" >
-                               
+	
                 </tbody>
             </table>
         </div>
@@ -443,10 +442,18 @@ while ($row2 = mysqli_fetch_assoc($result2))
 		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
     }
 
-	function deleteRow(btn) {
+	function deleteRow(btn , id, poliv ) {
+		console.log(id);
+			console.log(poliv);
+			
+			// treeUpdatePoliv(id, polivFromInput);
+
             var row = btn.parentNode.parentNode;
             row.parentNode.removeChild(row);
-            }
+			alert("Полив обновлен");
+
+    }
+	
 
 	function listTreesSelected(id)
         {
@@ -460,22 +467,40 @@ while ($row2 = mysqli_fetch_assoc($result2))
                     console.log("Tree of park:");
                     tenantsList = JSON.parse(data);
                     console.log("Tree of park :"+ tenantsList);
-                        $.each(tenantsList, function(key1, data1){
+                        $.each(tenantsList, function(key1){
                         $('#searchTree').append('<tr>\
                                                     <td>'+tenantsList[key1].id+'</td>\
-                                                    <td>'+tenantsList[key1].lat+'</td>\
-                                                    <td>'+tenantsList[key1].lon+'</td>\
                                                     <td>'+tenantsList[key1].specie+'</td>\
                                                     <td>'+tenantsList[key1].areaName+'</td>\
                                                     <td>'+tenantsList[key1].property+'</td>\
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].grade+'</td>\
-													<td><button type="button" class="btn btn-primary" onclick=console.log("вава"+deleteRow(this))>'+"Удалить"+'</button></td>\
+													<td><input class="form-control rounded" id="poliv" placeholder="Полив" aria-label="Send"/></td>\
+													<td><button type="button" class="btn btn-info" onclick=deleteRow(this,'+tenantsList[key1].id+','+$('#poliv').val()+'); >'+"Обновить"+'</button></td>\
                                                 </tr>');						
-                        });     
+                        });    
                 }
             });
+        }
+
+		function treeUpdatePoliv(id, poliv)
+        {
+			console.log("xlixked"+poliv);
+            // jQuery.ajax({
+            //     type: 'POST',
+            //     url: 'php/updatePoliv.php',
+            //     data:{
+            //         id: id,
+			// 		poliv: poliv
+            //     },
+            //     success: function(data){
+            //         console.log("Tree of park:");
+            //         tenantsList = JSON.parse(data);
+            //         console.log("Tree of park :"+ tenantsList);
+                       
+            //     }
+            // });
         }
     
 
