@@ -53,8 +53,9 @@ while ($row = mysqli_fetch_assoc($result))
 	$contractor = "Подрядчик: ". $row['contractor'] . " <br>";
 	$property = "Категория: " . $row['property'] . " <br>";
 	$areaName = "Место: " . $row['areaName'] . " <br>";
+	$poliv = "Полив: " .$row['poliv'] . " <br>";
 
-	$treeInfo = $id. " " . $specie . " " . $contractor . " " . $property . " " . $areaName;
+	$treeInfo = $id. " " . $specie . " " . $contractor . " " . $property . " " . $areaName . " " . $poliv;
 	$treeInfoArray[] = $treeInfo;
 }
 
@@ -161,10 +162,6 @@ while ($row2 = mysqli_fetch_assoc($result2))
 							<button type="button" id="update-poliv" class="btn btn-primary ml-1">Задать полив</button> -->
                             <!-- <input id="match" /> -->
         </div> 
-
-		<div class="col-8">
-			<input class="form-control rounded" id="poliv" placeholder="Задайте полив" aria-label="Send"/>
-		</div>
 	
 		<div class="card-body">
             <table class="table table-hover" >
@@ -188,7 +185,7 @@ while ($row2 = mysqli_fetch_assoc($result2))
 
 
 		<div style="margin-top:5px">
-		<div id="map" style="width: 100%; height:800px"></div>
+		<div id="map" style="width: 100%; height:350px"></div>
 		</div>
 
 	</div>
@@ -215,7 +212,7 @@ while ($row2 = mysqli_fetch_assoc($result2))
 		var myPlacemark = new ymaps.Placemark([
 			<?php echo $masspoint2[$i]; ?>
 		], {
-			hintContent: '<?php echo "Название парка: " . $areaName2ForBalloonArray[$i]; ?>'
+			hintContent: '<?php echo "Название сквера: " . $areaName2ForBalloonArray[$i]; ?>'
 		}, {
 			hasBalloon: false,
 			preset: 'islands#icon',
@@ -449,15 +446,16 @@ while ($row2 = mysqli_fetch_assoc($result2))
 		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
     }
 
-	function deleteRow(btn , id, poliv) {
+	function deleteRow(btn , id, poliv, areaNameCol) {
 			console.log(id);
 			console.log(poliv);
+			console.log(areaNameCol);
 			
-			// treeUpdatePoliv(id, polivFromInput);
+			treeUpdatePoliv(id, poliv, areaNameCol);
 
             var row = btn.parentNode.parentNode;
             row.parentNode.removeChild(row);
-			alert("Полив обновлен");
+			// alert("Полив обновлен");
 
     }
 	
@@ -483,31 +481,49 @@ while ($row2 = mysqli_fetch_assoc($result2))
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].grade+'</td>\
-													<td>'+tenantsList[key1].poliv+'</td>\
-													<td><button type="button" class="btn btn-info" onclick=deleteRow(this,'+tenantsList[key1].id+',\''+$('#poliv').val()+'\'); >'+"Обновить"+'</button></td>\
+													<td><input class="form-control rounded" id="poliv-input" placeholder="Задайте полив" aria-label="Send"/></td>\
+													<td><button type="button" id="poliv-btn" class="btn btn-info" >'+"Обновить"+'</button></td>\
                                                 </tr>');						
                         });
+
+						$('#poliv-btn').click(function(){
+
+							var currentRow = $(this).closest("tr"); 
+							var col = currentRow.find("td:eq(7)").find('input').val();	
+							var idCol = currentRow.find("td:eq(0)").text();
+
+							var areaNameCol = currentRow.find("td:eq(2)").text();
+							
+							deleteRow(this, idCol, col, areaNameCol);
+						});	
                 }
             });
         }
 
-		function treeUpdatePoliv(id, poliv)
+		function treeUpdatePoliv(id, poliv, areaNameCol)
         {
-			console.log("xlixked"+poliv);
-            // jQuery.ajax({
-            //     type: 'POST',
-            //     url: 'php/updatePoliv.php',
-            //     data:{
-            //         id: id,
-			// 		poliv: poliv
-            //     },
-            //     success: function(data){
-            //         console.log("Tree of park:");
-            //         tenantsList = JSON.parse(data);
-            //         console.log("Tree of park :"+ tenantsList);
-                       
-            //     }
-            // });
+			console.log("clicked "+ poliv + " " + id);
+            jQuery.ajax({
+                type: 'POST',
+                url: 'php/updatePoliv.php',
+                data:{
+                    id: id,
+					poliv: poliv
+                },
+                success: function(data){
+                    // console.log("Tree of park:");
+                    // tenantsList = JSON.parse(data);
+                    // console.log("Tree of park :"+ tenantsList);
+
+					alert("ПОЛИВ ДЕРЕВА " + id + " ОБНОВЛЕН");
+					
+				
+					$('#map').empty();
+					// MapsLoadTreeByArea(areaNameCol);
+					init();
+					window.location.reload(false);
+                }
+            });
         }
     
 
