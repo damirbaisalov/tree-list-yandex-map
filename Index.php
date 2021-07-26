@@ -195,7 +195,6 @@ while ($row2 = mysqli_fetch_assoc($result2))
 	<script type="text/javascript">
 	// ymaps.ready(init);
 
-
 	function init() {
 		var myMap = new ymaps.Map("map", {
 			center: [<?php echo $masspoint2[0];?>],
@@ -473,7 +472,8 @@ while ($row2 = mysqli_fetch_assoc($result2))
                     tenantsList = JSON.parse(data);
                     console.log("Tree of park :"+ tenantsList);
                         $.each(tenantsList, function(key1){
-                        $('#searchTree').append('<tr>\
+						if ($('#searchTree').children().length == 0 ){
+							$('#searchTree').append('<tr>\
                                                     <td>'+tenantsList[key1].id+'</td>\
                                                     <td>'+tenantsList[key1].specie+'</td>\
                                                     <td>'+tenantsList[key1].areaName+'</td>\
@@ -481,50 +481,65 @@ while ($row2 = mysqli_fetch_assoc($result2))
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].grade+'</td>\
-													<td><input class="form-control rounded" id="poliv-input" placeholder="Задайте полив" aria-label="Send"/></td>\
-													<td><button type="button" id="poliv-btn" class="btn btn-info" >'+"Обновить"+'</button></td>\
-                                                </tr>');						
+													<td>'+tenantsList[key1].poliv+'</td>\
+													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти к дереву</a></td>\
+                                                </tr>');
+
+						} else {
+							$("#searchTree").empty();
+							$('#searchTree').append('<tr>\
+                                                    <td>'+tenantsList[key1].id+'</td>\
+                                                    <td>'+tenantsList[key1].specie+'</td>\
+                                                    <td>'+tenantsList[key1].areaName+'</td>\
+                                                    <td>'+tenantsList[key1].property+'</td>\
+                                                    <td>'+tenantsList[key1].contractor+'</td>\
+                                                    <td>'+tenantsList[key1].age+'</td>\
+                                                    <td>'+tenantsList[key1].grade+'</td>\
+													<td>'+tenantsList[key1].poliv+'</td>\
+													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти к дереву</a></td>\
+                                                </tr>');
+						}				
                         });
 
-						$('#poliv-btn').click(function(){
+						// $('#poliv-btn').click(function(){
 
-							var currentRow = $(this).closest("tr"); 
-							var col = currentRow.find("td:eq(7)").find('input').val();	
-							var idCol = currentRow.find("td:eq(0)").text();
+						// 	var currentRow = $(this).closest("tr"); 
+						// 	var col = currentRow.find("td:eq(7)").find('input').val();	
+						// 	var idCol = currentRow.find("td:eq(0)").text();
 
-							var areaNameCol = currentRow.find("td:eq(2)").text();
+						// 	var areaNameCol = currentRow.find("td:eq(2)").text();
 							
-							deleteRow(this, idCol, col, areaNameCol);
-						});	
+						// 	deleteRow(this, idCol, col, areaNameCol);
+						// });	
                 }
             });
         }
 
-		function treeUpdatePoliv(id, poliv, areaNameCol)
-        {
-			console.log("clicked "+ poliv + " " + id);
-            jQuery.ajax({
-                type: 'POST',
-                url: 'php/updatePoliv.php',
-                data:{
-                    id: id,
-					poliv: poliv
-                },
-                success: function(data){
-                    // console.log("Tree of park:");
-                    // tenantsList = JSON.parse(data);
-                    // console.log("Tree of park :"+ tenantsList);
+		// function treeUpdatePoliv(id, poliv, areaNameCol)
+        // {
+		// 	console.log("clicked "+ poliv + " " + id);
+        //     jQuery.ajax({
+        //         type: 'POST',
+        //         url: 'php/updatePoliv.php',
+        //         data:{
+        //             id: id,
+		// 			poliv: poliv
+        //         },
+        //         success: function(data){
+        //             // console.log("Tree of park:");
+        //             // tenantsList = JSON.parse(data);
+        //             // console.log("Tree of park :"+ tenantsList);
 
-					alert("ПОЛИВ ДЕРЕВА " + id + " ОБНОВЛЕН");
+		// 			alert("ПОЛИВ ДЕРЕВА " + id + " ОБНОВЛЕН");
 					
 				
-					$('#map').empty();
-					// MapsLoadTreeByArea(areaNameCol);
-					init();
-					window.location.reload(false);
-                }
-            });
-        }
+		// 			$('#map').empty();
+		// 			// MapsLoadTreeByArea(areaNameCol);
+		// 			init();
+		// 			window.location.reload(false);
+        //         }
+        //     });
+        // }
     
 
 	</script>
