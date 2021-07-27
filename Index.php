@@ -124,6 +124,7 @@ while ($row = mysqli_fetch_assoc($result))
                         <th scope="col">Grade</th>
 						<th scope="col">Полив</th>
                         <th scope="col">Обновить строку</th>
+						<th scope="col">Удалить строку</th>
                     </tr>
                 </thead>
                 <tbody id="searchTree" >
@@ -229,6 +230,15 @@ while ($row = mysqli_fetch_assoc($result))
 			// alert("Полив обновлен");
 
     }
+
+	function removeRow(btn) {
+
+
+            var row = btn.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+			// alert("Полив обновлен");
+
+    }
 	
 
 	function listTreesSelected(id)
@@ -254,7 +264,8 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].grade+'</td>\
 													<td>'+tenantsList[key1].poliv+'</td>\
-													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти к дереву</a></td>\
+													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
+													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
                                                 </tr>');
 
 						} else {
@@ -268,7 +279,8 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].grade+'</td>\
 													<td>'+tenantsList[key1].poliv+'</td>\
-													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти к дереву</a></td>\
+													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
+													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
                                                 </tr>');
 						}				
                         });
