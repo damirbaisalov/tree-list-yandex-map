@@ -140,7 +140,7 @@ while ($row = mysqli_fetch_assoc($result))
 	<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=d811ec43-1783-4052-a752-a52f361f333d" type="text/javascript"></script>
 	<!-- <script src="//code.jquery.com/jquery-1.11.2.min.js"></script> -->
 	<script type="text/javascript">
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 	function init() {
 		var myMap = new ymaps.Map("map", {
 			center: [<?php echo $masspoint[0];?>],
