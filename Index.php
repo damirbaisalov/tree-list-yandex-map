@@ -496,24 +496,40 @@ while ($row = mysqli_fetch_assoc($result))
 		}, {
 			searchControlProvider: 'yandex#search'
 		});
+
+		clusterer = new ymaps.Clusterer({
+     
+            preset: 'islands#icon',
+			iconColor: '#0000ff',
+           
+            groupByCoordinates: false,
+            
+            clusterDisableClickZoom: true,
+            clusterHideIconOnBalloonOpen: false,
+            geoObjectHideIconOnBalloonOpen: false
+        });
 		
-		var myCollection1 = new ymaps.GeoObjectCollection();
+		var geoObjects = [];
 
 		for(var i=0; i<data.length; i++){
-			// var areaNameConverted = "Название сквера: " + data[0]["areaName"];
+	
 			var dataConverted = convertDataForHintBalloon(data[i]);
 			var selectedTreeId = data[i]["id"];
 
 				var myPlacemark = new ymaps.Placemark([
 					data[i]["lat"], data[i]["lon"]
 				], {
-					hintContent: dataConverted
+					balloonContentBody: dataConverted,
+					balloonContentFooter: '<button class="btn btn-primary" onclick=(listTreesSelected('+selectedTreeId+'))>Добавить дерево в таблицу</button>',
+					clusterCaption: 'дерево <strong>' + data[i]["id"] + '</strong>'
 				}, {
 					hasBalloon: false,
 					preset: 'islands#icon',
 					iconColor: '#0000ff'
 				});
-				myCollection1.add(myPlacemark);
+				// myCollection1.add(myPlacemark);
+
+				geoObjects[i] = myPlacemark;
 
 				myPlacemark.events.add('click', function () {
 					// var idOfTree  = data[i]["id"];
@@ -523,10 +539,22 @@ while ($row = mysqli_fetch_assoc($result))
 			
 		}
 
-		myMap1.geoObjects.add(myCollection1);
+		clusterer.options.set({
+        gridSize: 80,
+        clusterDisableClickZoom: true
+    	});
+
+		clusterer.add(geoObjects);
+    	myMap1.geoObjects.add(clusterer);
+
+		// myMap1.geoObjects.add(myCollection1);
 
 		// Сделаем у карты автомасштаб чтобы были видны все метки.
-		myMap1.setBounds(myCollection1.getBounds(),{checkZoomRange:true, zoomMargin:9});
+		// myMap1.setBounds(myCollection1.getBounds(),{checkZoomRange:true, zoomMargin:9});
+
+		myMap1.setBounds(clusterer.getBounds(), {
+        checkZoomRange: true
+   		 });
 
 	}
 
