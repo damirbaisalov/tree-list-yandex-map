@@ -49,7 +49,7 @@ include('php/connect.php');
     var queryString = location.search.substring(1);
     console.log(queryString);
 
-    listTreeInfo(queryString);
+    listTreeInfo(queryString);   
 
     function listTreeInfo(id)
         {
@@ -72,8 +72,22 @@ include('php/connect.php');
                                 <p class="card-text">Возраст дерева: '+tenantsList[key1].age+'</p>\
                                 <p class="card-text">Полив: '+tenantsList[key1].poliv+'</p>\
                                 <p class="card-text">Подрядчик: '+tenantsList[key1].contractor+'</p>\
-                                <p class="card-text text-center"><button class="btn btn-success">Добавить файл</button></p>'
+                                <p class="card-text text-center"><input type="file" id="upload-file" hidden="hidden"/><button id="upload-btn" class="btn btn-success">Добавить файл</button><p class="text-center"><span id="upload-text"></span></p></p>'
                             );					
+                        });
+
+                        $('#upload-btn').click(function(){
+                            
+                            $('#upload-file').click();
+                            
+                        });
+
+                        $('#upload-file').on('change',function() {
+                            if ($('#upload-file').val()) {
+                                    $('#upload-text').text($('#upload-file').val().match(/[\/\\]([\w\d\s\.\-\(\)]+)$/)[1]);
+                                } else {
+                                    $('#upload-text').text("Файл не выбран"); 
+                                }
                         });
                 }
             });
