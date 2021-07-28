@@ -7,6 +7,54 @@
 session_start();
 include('php/connect.php');
 
+$target_dir = "uploads/";
+$target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
+$uploadOk = 1;
+$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+
+// Check if image file is a actual image or fake image
+if(isset($_POST["submit"])) {
+  $check = filesize($_FILES["fileToUpload"]["tmp_name"]);
+  if($check !== false) {
+    // echo "File is an pdf/doc - " . $check["mime"] . ".";
+    $uploadOk = 1;
+  } else {
+    // echo "File is not an pdf/doc.";
+    $uploadOk = 0;
+  }
+}
+
+// Check if file already exists
+if (file_exists($target_file)) {
+//   echo "Sorry, file already exists.";
+  $uploadOk = 0;
+}
+
+// Check file size
+if ($_FILES["fileToUpload"]["size"] > 500000) {
+//   echo "Sorry, your file is too large.";
+  $uploadOk = 0;
+}
+
+// Allow certain file formats
+if($imageFileType != "pdf" && $imageFileType != "doc" && $imageFileType != "docx"
+&& $imageFileType != "gif" ) {
+//   echo "Sorry, only PDF, DOC files are allowed.";
+  $uploadOk = 0;
+}
+
+// Check if $uploadOk is set to 0 by an error
+if ($uploadOk == 0) {
+//   echo "Sorry, your file was not uploaded.";
+// if everything is ok, try to upload file
+} else {
+  if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+    // echo "The file ". htmlspecialchars( basename( $_FILES["fileToUpload"]["name"])). " has been uploaded.";
+  } else {
+    // echo "Sorry, there was an error uploading your file.";
+  }
+}
+
 ?>
 
 
@@ -28,13 +76,14 @@ include('php/connect.php');
 
     <div class="d-flex justify-content-center mt-3">
         <div class="card text-black bg-light mb-3" style="max-width: 25rem; text-center">
+        <form action="treeInfo.php" method="post" enctype="multipart/form-data">
             <div class="card-header text-center"><h5>Паспорт дерева</h5></div>
             <div class="card-body" id="tree-info-parent">
                 <!-- <h5 class="card-title">Primary card title</h5> -->
             </div>
+        </form>
         </div>
     </div>
-
 
     <!-- <div id="tree-info-parent" class="col-8 card-body"> -->
 
@@ -72,23 +121,11 @@ include('php/connect.php');
                                 <p class="card-text">Возраст дерева: '+tenantsList[key1].age+'</p>\
                                 <p class="card-text">Полив: '+tenantsList[key1].poliv+'</p>\
                                 <p class="card-text">Подрядчик: '+tenantsList[key1].contractor+'</p>\
-                                <p class="card-text text-center"><input type="file" id="upload-file" hidden="hidden"/><button id="upload-btn" class="btn btn-success">Добавить файл</button><p class="text-center"><span id="upload-text"></span></p></p>'
+                                <p class="card-text"><input type="file" name="fileToUpload" id="fileToUpload"></p>\
+                                <p class="card-text text-center"><input type="submit" value="Отправить файл" name="submit" class="btn btn-success"></p>'
                             );					
                         });
 
-                        $('#upload-btn').click(function(){
-                            
-                            $('#upload-file').click();
-                            
-                        });
-
-                        $('#upload-file').on('change',function() {
-                            if ($('#upload-file').val()) {
-                                    $('#upload-text').text($('#upload-file').val().match(/[\/\\]([\w\d\s\.\-\(\)]+)$/)[1]);
-                                } else {
-                                    $('#upload-text').text("Файл не выбран"); 
-                                }
-                        });
                 }
             });
         }
