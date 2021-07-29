@@ -71,7 +71,7 @@ while ($row = mysqli_fetch_assoc($result))
                     <!-- <input id="match" /> -->
         </div>
 
-		<div class="col-12 input-group rounded mb-3" style="margin-top: 10px"  >
+		<div class="col-8 input-group rounded mb-3" style="margin-top: 10px"  >
                             <select class="form-control rounded" aria-label="Default select example" id="area">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
                                 <option disabled selected value> -- Выберите место -- </option>
@@ -121,9 +121,9 @@ while ($row = mysqli_fetch_assoc($result))
                         <th scope="col">Property</th>
                         <th scope="col">Подрядчик</th>
                         <th scope="col">Возраст дерева</th>
-                        <th scope="col">Grade</th>
-						<th scope="col">Полив</th>
-                        <th scope="col">Обновить строку</th>
+                        <th scope="col">Статус(Пень)</th>
+						<th scope="col">Срубить дерево</th>
+                        <th scope="col">Паспорт дерева</th>
 						<th scope="col">Удалить строку</th>
                     </tr>
                 </thead>
@@ -131,6 +131,38 @@ while ($row = mysqli_fetch_assoc($result))
                 </tbody>
             </table>
         </div>
+
+		<!-- Modal -->
+		<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Задайте параметры для новых деревьев</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+
+				<h6>Название сквера:</h6>
+				<input type="text" class="form-control rounded" id="newAreaName" aria-label="Send" disabled/>
+				<h6 class="mt-2">Тип сквера:</h6>
+				<input type="text" class="form-control rounded" id="newProperty" aria-label="Send" disabled/>
+				<h6 class="mt-2">Подрядчик:</h6>
+				<input type="text" class="form-control rounded" id="newContractor" aria-label="Send"/>
+				<h6 class="mt-2">Вид дерева:</h6>  
+				<input type="text" class="form-control rounded" id="newSpecie" placeholder="Вид" aria-label="Send"/>
+				<h6 class="mt-2 mb-2">Количество:</h6>
+				<input type="number" class="form-control rounded" id="newCountTree" placeholder="Количество деревьев" aria-label="Send"/>   
+				
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+				<button type="button" id="insert-tree-btn" class="btn btn-primary">Сохранить</button>
+			</div>
+			</div>
+		</div>
+		</div>
 
 		<div style="margin-top:5px">
 		<div id="map" style="width: 100%; height:350px"></div>
@@ -142,6 +174,10 @@ while ($row = mysqli_fetch_assoc($result))
 	<!-- <script src="//code.jquery.com/jquery-1.11.2.min.js"></script> -->
 	<script type="text/javascript">
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+	var curLat = 0;
+	var curLon = 0;
+	var curId = 0;
+ 
 	function init() {
 		var myMap = new ymaps.Map("map", {
 			center: [<?php echo $masspoint[0];?>],
@@ -214,6 +250,39 @@ while ($row = mysqli_fetch_assoc($result))
 		}
 		});
 
+		$('#insert-tree-btn').click(function() {
+			console.log("hellow before");
+			var newAreaName = $('#newAreaName').val();
+			var newProperty = $('#newProperty').val();
+			var newLat = curLat;
+			var newLon = curLon;
+			var newContractor = $('#newContractor').val();
+			var newSpecie = $('#newSpecie').val();
+			var count = $('#newCountTree').val();
+
+			if (newSpecie.length == 0 || newContractor.length==0 || count<=0){
+				alert("пожалуйста заполните все обязательные поля");
+
+				$("#exampleModal").modal('show');
+
+			} else {
+				insertTree(newLat, newLon, newContractor,newSpecie,newAreaName,newProperty,count);
+				console.log(newAreaName);
+				console.log(newProperty);
+				console.log(newLat);
+				console.log(newLon);
+				console.log(newContractor);
+				console.log(newSpecie);
+				console.log(count);
+				console.log("hellow after");
+				updateTreeStatusById(curId);
+				console.log(curId);
+				// window.location.reload(false);
+				alert("Новый объект добавлен!");
+				$("#exampleModal").modal('hide');
+			}
+		});
+
 	}
 
 	ymaps.ready(init);
@@ -247,6 +316,7 @@ while ($row = mysqli_fetch_assoc($result))
                 type: 'POST',
                 url: 'php/requests.php',
                 data:{
+					'listTreesById' : 'listTreesById', 
                     id: id
                 },
                 success: function(data){
@@ -254,6 +324,12 @@ while ($row = mysqli_fetch_assoc($result))
                     tenantsList = JSON.parse(data);
                     console.log("Tree of park :"+ tenantsList);
                         $.each(tenantsList, function(key1){
+						var areaNameForChop = tenantsList[key1].areaName;
+						var propertyForChop = tenantsList[key1].property;
+						var contractorForChop = tenantsList[key1].contractor;
+						curLat = tenantsList[key1].lat;
+						curLon = tenantsList[key1].lon;	
+						curId = tenantsList[key1].id;
 						if ($('#searchTree').children().length == 0 ){
 							$('#searchTree').append('<tr>\
                                                     <td>'+tenantsList[key1].id+'</td>\
@@ -262,8 +338,8 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].property+'</td>\
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
-                                                    <td>'+tenantsList[key1].grade+'</td>\
-													<td>'+tenantsList[key1].poliv+'</td>\
+                                                    <td>'+tenantsList[key1].status+'</td>\
+													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
 													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
 													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
                                                 </tr>');
@@ -277,8 +353,8 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].property+'</td>\
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
-                                                    <td>'+tenantsList[key1].grade+'</td>\
-													<td>'+tenantsList[key1].poliv+'</td>\
+													<td>'+tenantsList[key1].status+'</td>\
+													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
 													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
 													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
                                                 </tr>');
@@ -295,9 +371,22 @@ while ($row = mysqli_fetch_assoc($result))
 							
 						// 	deleteRow(this, idCol, col, areaNameCol);
 						// });	
+
+						// $('#open-model-btn').click(funcion() {
+							
+						// })
                 }
             });
         }
+
+	function treeChopInfo(areaName, property, contractor) {
+		console.log(areaName);
+		console.log(property);
+		console.log(contractor);
+		$('#newAreaName').val(areaName);
+		$('#newProperty').val(property);
+		$('#newContractor').val(contractor);
+	}
 
 		// function treeUpdatePoliv(id, poliv, areaNameCol)
         // {
@@ -335,7 +424,10 @@ while ($row = mysqli_fetch_assoc($result))
 			url:'php/requests.php',
 			type:'post',
 			cache:false,
-			data:{'area': area},
+			data:{
+				'onlyArea': 'onlyArea',
+				'area': area
+			},
 			dataType:'html',
 			beforeSend: function(){
 				console.log("Идет загрузка...");
@@ -349,6 +441,54 @@ while ($row = mysqli_fetch_assoc($result))
 
 			}
 			});	
+	}
+
+	function insertTree(lat,lon,contractor,specie,areaName,property,count){
+		for (var i=0; i<count;i++) {
+
+			$.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'insert_tree': 'insert_tree',
+				'lat': lat,
+				'lon': lon,
+				'specie': specie,
+				'contractor': contractor,
+				'specie': specie,
+				'area': areaName,
+				'property': property
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				console.log(data);
+			}
+			});	
+		}
+	}
+
+	function updateTreeStatusById(id){
+		
+		$.ajax({
+		url:'php/requests.php',
+		type:'post',
+		cache:false,
+		data:{
+			'update_tree': 'update_tree',
+			'id': id
+		},
+		dataType:'html',
+		beforeSend: function(){
+			console.log("Идет загрузка...");
+		},
+		success:function(data){
+			console.log(data);
+		}
+		});	
 	}
 
 	function getTreesById(id){
@@ -378,7 +518,10 @@ while ($row = mysqli_fetch_assoc($result))
 		url:'php/requests.php',
 		type:'post',
 		cache:false,
-		data:{'specie': specie},
+		data:{
+			'onlySpecie' : 'onlySpecie',
+			'specie': specie
+		},
 		dataType:'html',
 		beforeSend: function(){
 			console.log("Идет загрузка...");
@@ -399,7 +542,12 @@ while ($row = mysqli_fetch_assoc($result))
 		url:'php/requests.php',
 		type:'post',
 		cache:false,
-		data:{'specie': specie, 'area': area},
+		data:{
+			'withSpecie' : 'withSpecie',
+			'withArea' : 'withArea',
+			'specie': specie, 
+			'area': area
+		},
 		dataType:'html',
 		beforeSend: function(){
 			console.log("Идет загрузка...");
@@ -617,8 +765,9 @@ while ($row = mysqli_fetch_assoc($result))
 		var property = "Категория: " + data["property"] + " <br>";
 		var areaName = "Место: " + data["areaName"] + " <br>";
 		var poliv = "Полив: " + data["poliv"] + " <br>";
+		var status = "Статус: " + data["status"] + " <br>";
 
-		var treeInfo = id + " " + specie + " " + contractor + " " + property + " " + areaName + " " + poliv;
+		var treeInfo = id + " " + specie + " " + contractor + " " + property + " " + areaName + " " + poliv + " " + status;
 
 		return treeInfo;
 	}
