@@ -1,7 +1,7 @@
 <?php
 
 session_start();
-include('php/connect.php');
+include('../php/connect.php');
 
 if( isset( $_POST['my_file_upload'] ) ){  
 	// ВАЖНО! тут должны быть все проверки безопасности передавемых файлов и вывести ошибки если нужно

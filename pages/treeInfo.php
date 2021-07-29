@@ -5,7 +5,7 @@
 <?php
 
 session_start();
-include('php/connect.php');
+include('../php/connect.php');
 
 // $target_dir = "uploads/";
 // $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
@@ -77,39 +77,32 @@ include('php/connect.php');
 
     <div class="d-flex justify-content-center mt-3">
         <div class="card text-black bg-light mb-3" style="max-width: 25rem; text-center">
-        <form id="myForm" action="treeInfo.php?id=<?=$_GET["id"]?>" method="post" enctype="multipart/form-data">
+       
             <div class="card-header text-center"><h5>Паспорт дерева</h5></div>
             <div class="card-body" id="tree-info-parent">
                 <!-- <h5 class="card-title">Primary card title</h5> -->
             </div>
-        </form>
+    
         </div>
     </div>
 
-    <!-- <div id="tree-info-parent" class="col-8 card-body"> -->
-    <button id="id">go</button>
-
-
+    <div class="d-flex justify-content-center mt-3">
+      <input type="file" multiple="multiple" accept=".pdf,.doc,.txt,image/*">
+      <a href="#" class="upload_files btn btn-success">Загрузить файлы</a>
+      
+  
     </div>
 
 	<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=d811ec43-1783-4052-a752-a52f361f333d" type="text/javascript"></script>
 	<!-- <script src="//code.jquery.com/jquery-1.11.2.min.js"></script> -->
 	<script type="text/javascript">
-    
-    // const myForm = document.getElementById("myForm");
-    // const inpFile = document.getElementById("fileToUpload");
 
-    myForm.addEventListener("submit", e => {
+    var files; // переменная. будет содержать данные файлов
 
-      e.preventDefault();
-
-      // const endpoint = "upload.php";
-      // const formData = new FormData();
-       
-      // console.log(inpFile.files);
-
-      // formData.append("fileToUpload", inpFile.files[0]);
-    })
+    // заполняем переменную данными, при изменении значения поля file 
+    $('input[type=file]').on('change', function(){
+      files = this.files;
+    });
 
     var queryString = location.search.substring(1);
     console.log(queryString);
@@ -119,7 +112,7 @@ include('php/connect.php');
     listTreeInfo(convertedId);   
 
     function listTreeInfo(id)
-        {
+    {
             jQuery.ajax({
                 type: 'POST',
                 url: '../php/requests.php',
@@ -139,27 +132,74 @@ include('php/connect.php');
                                 <p class="card-text">Вид дерева: '+tenantsList[key1].specie+'</p>\
                                 <p class="card-text">Возраст дерева: '+tenantsList[key1].age+'</p>\
                                 <p class="card-text">Полив: '+tenantsList[key1].poliv+'</p>\
-                                <p class="card-text">Подрядчик: '+tenantsList[key1].contractor+'</p>\
-                                <p class="card-text"><input type="file" class="form-control" name="fileToUpload" id="fileToUpload"></p>\
-                                <p class="card-text text-center"><input type="submit" id="submit-btn" value="Отправить файл" name="submit" class="btn btn-success"></p>'
+                                <p class="card-text">Подрядчик: '+tenantsList[key1].contractor+'</p>'
                             );					
                         });
-                      $('#submit-btn').click(function() {
-                          alert("Файл успешно добавлен");
-                          // window.location.replace("../Index.php");
-		                  });
-
-                      $('#id').click(function() {
-                          alert("Файл успешно добавлен");
-                          window.location.replace("../Index.php");
-		                  });
                 }
             });
-      }
+    }
+     
+    // обработка и отправка AJAX запроса при клике на кнопку upload_files
+    $('.upload_files').on( 'click', function( event ){
 
+      event.stopPropagation(); // остановка всех текущих JS событий
+      event.preventDefault();  // остановка дефолтного события для текущего элемента - клик для <a> тега
 
-	
-    
+      // ничего не делаем если files пустой
+      if( typeof files == 'undefined' ) return;
+
+      // создадим объект данных формы
+      var data = new FormData();
+
+      // заполняем объект данных файлами в подходящем для отправки формате
+      $.each( files, function( key, value ){
+        data.append( key, value );
+      });
+
+      // добавим переменную для идентификации запроса
+      data.append( 'my_file_upload', 1 );
+
+      // AJAX запрос
+      $.ajax({
+        url         : 'upload.php',
+        type        : 'POST', // важно!
+        data        : data,
+        cache       : false,
+        dataType    : 'json',
+        // отключаем обработку передаваемых данных, пусть передаются как есть
+        processData : false,
+        // отключаем установку заголовка типа запроса. Так jQuery скажет серверу что это строковой запрос
+        contentType : false, 
+        // функция успешного ответа сервера
+        success     : function( respond, status, jqXHR ){
+          
+          console.log(respond);
+          alert("Файл успешно загружен");
+
+          // ОК - файлы загружены
+          if( typeof respond.error === 'undefined' ){
+            // выведем пути загруженных файлов в блок '.ajax-reply'
+            var files_path = respond.files;
+            var html = '';
+            $.each( files_path, function( key, val ){
+              html += val +'<br>';
+            } )
+
+            // $('.ajax-reply').html( html );
+          }
+          // ошибка
+          else {
+            console.log('ОШИБКА: ' + respond.data );
+          } 
+        },
+        // функция ошибки ответа сервера
+        error: function( jqXHR, status, errorThrown ){
+          console.log( 'ОШИБКА AJAX запроса: ' + status, jqXHR );
+        }
+
+      });
+
+  });  
 
 	</script>
 
