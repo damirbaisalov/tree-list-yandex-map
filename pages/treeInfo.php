@@ -7,53 +7,54 @@
 session_start();
 include('php/connect.php');
 
-$target_dir = "uploads/";
-$target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
-$uploadOk = 1;
-$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+// $target_dir = "uploads/";
+// $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
+// $uploadOk = 1;
+// $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
 
-// Check if image file is a actual image or fake image
-if(isset($_POST["submit"])) {
-  $check = filesize($_FILES["fileToUpload"]["tmp_name"]);
-  if($check !== false) {
-    // echo "File is an pdf/doc - " . $check["mime"] . ".";
-    $uploadOk = 1;
-  } else {
-    // echo "File is not an pdf/doc.";
-    $uploadOk = 0;
-  }
-}
+// // Check if image file is a actual image or fake image
+// if(isset($_POST["submit"])) {
+//   $check = filesize($_FILES["fileToUpload"]["tmp_name"]);
+//   if($check !== false) {
+//     echo "File is an pdf/doc - " . $check["mime"] . ".";
+//     $uploadOk = 1;
+//   } else {
+//     echo "File is not an pdf/doc.";
+//     $uploadOk = 0;
+//   }
+// }
 
-// Check if file already exists
-if (file_exists($target_file)) {
+// // Check if file already exists
+// if (file_exists($target_file)) {
 //   echo "Sorry, file already exists.";
-  $uploadOk = 0;
-}
+//   $uploadOk = 0;
+// }
 
-// Check file size
-if ($_FILES["fileToUpload"]["size"] > 500000) {
+// // Check file size
+// if ($_FILES["fileToUpload"]["size"] > 500000) {
 //   echo "Sorry, your file is too large.";
-  $uploadOk = 0;
-}
+//   $uploadOk = 0;
+// }
 
-// Allow certain file formats
-if($imageFileType != "pdf" && $imageFileType != "doc" && $imageFileType != "docx"
-&& $imageFileType != "gif" ) {
+// // Allow certain file formats
+// if($imageFileType != "pdf" && $imageFileType != "doc" && $imageFileType != "docx"
+// && $imageFileType != "gif" ) {
 //   echo "Sorry, only PDF, DOC files are allowed.";
-  $uploadOk = 0;
-}
+//   $uploadOk = 0;
+// }
 
-// Check if $uploadOk is set to 0 by an error
-if ($uploadOk == 0) {
+// // Check if $uploadOk is set to 0 by an error
+// if ($uploadOk == 0) {
 //   echo "Sorry, your file was not uploaded.";
-// if everything is ok, try to upload file
-} else {
-  if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-    // echo "The file ". htmlspecialchars( basename( $_FILES["fileToUpload"]["name"])). " has been uploaded.";
-  } else {
-    // echo "Sorry, there was an error uploading your file.";
-  }
-}
+// // if everything is ok, try to upload file
+// } else {
+//   if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+    
+//     echo "The file ". htmlspecialchars( basename( $_FILES["fileToUpload"]["name"])). " has been uploaded.";
+//   } else {
+//     echo "Sorry, there was an error uploading your file.";
+//   }
+// }
 
 ?>
 
@@ -76,7 +77,7 @@ if ($uploadOk == 0) {
 
     <div class="d-flex justify-content-center mt-3">
         <div class="card text-black bg-light mb-3" style="max-width: 25rem; text-center">
-        <form action="treeInfo.php" method="post" enctype="multipart/form-data">
+        <form id="myForm" action="treeInfo.php?id=<?=$_GET["id"]?>" method="post" enctype="multipart/form-data">
             <div class="card-header text-center"><h5>Паспорт дерева</h5></div>
             <div class="card-body" id="tree-info-parent">
                 <!-- <h5 class="card-title">Primary card title</h5> -->
@@ -86,7 +87,7 @@ if ($uploadOk == 0) {
     </div>
 
     <!-- <div id="tree-info-parent" class="col-8 card-body"> -->
-
+    <button id="id">go</button>
 
 
     </div>
@@ -95,10 +96,27 @@ if ($uploadOk == 0) {
 	<!-- <script src="//code.jquery.com/jquery-1.11.2.min.js"></script> -->
 	<script type="text/javascript">
     
+    // const myForm = document.getElementById("myForm");
+    // const inpFile = document.getElementById("fileToUpload");
+
+    myForm.addEventListener("submit", e => {
+
+      e.preventDefault();
+
+      // const endpoint = "upload.php";
+      // const formData = new FormData();
+       
+      // console.log(inpFile.files);
+
+      // formData.append("fileToUpload", inpFile.files[0]);
+    })
+
     var queryString = location.search.substring(1);
     console.log(queryString);
+    var convertedId = queryString.substring(3,queryString.length);
+    console.log(convertedId);
 
-    listTreeInfo(queryString);   
+    listTreeInfo(convertedId);   
 
     function listTreeInfo(id)
         {
@@ -106,6 +124,7 @@ if ($uploadOk == 0) {
                 type: 'POST',
                 url: '../php/requests.php',
                 data:{
+                    'listTreesById' : 'listTreesById',
                     id: id
                 },
                 success: function(data){
@@ -121,14 +140,22 @@ if ($uploadOk == 0) {
                                 <p class="card-text">Возраст дерева: '+tenantsList[key1].age+'</p>\
                                 <p class="card-text">Полив: '+tenantsList[key1].poliv+'</p>\
                                 <p class="card-text">Подрядчик: '+tenantsList[key1].contractor+'</p>\
-                                <p class="card-text"><input type="file" name="fileToUpload" id="fileToUpload"></p>\
-                                <p class="card-text text-center"><input type="submit" value="Отправить файл" name="submit" class="btn btn-success"></p>'
+                                <p class="card-text"><input type="file" class="form-control" name="fileToUpload" id="fileToUpload"></p>\
+                                <p class="card-text text-center"><input type="submit" id="submit-btn" value="Отправить файл" name="submit" class="btn btn-success"></p>'
                             );					
                         });
+                      $('#submit-btn').click(function() {
+                          alert("Файл успешно добавлен");
+                          // window.location.replace("../Index.php");
+		                  });
 
+                      $('#id').click(function() {
+                          alert("Файл успешно добавлен");
+                          window.location.replace("../Index.php");
+		                  });
                 }
             });
-        }
+      }
 
 
 	

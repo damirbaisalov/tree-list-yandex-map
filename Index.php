@@ -231,7 +231,6 @@ while ($row = mysqli_fetch_assoc($result))
 			init();
 		});
 
-
 		$('#13').click(function(){
 		var area = $('#area').val();
 		var specie = $('#specie').val();
@@ -340,7 +339,7 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].status+'</td>\
 													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
-													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
+													<td><a href="pages/treeInfo.php?id='+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
 													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
                                                 </tr>');
 
@@ -355,7 +354,7 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].age+'</td>\
 													<td>'+tenantsList[key1].status+'</td>\
 													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
-													<td><a href="pages/treeInfo.php?'+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
+													<td><a href="pages/treeInfo.php?id='+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
 													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
                                                 </tr>');
 						}				
@@ -497,7 +496,10 @@ while ($row = mysqli_fetch_assoc($result))
 		url:'php/requests.php',
 		type:'post',
 		cache:false,
-		data:{'id': id},
+		data:{
+			'listTreesById' : 'listTreesById', 
+            id: id
+		},
 		dataType:'html',
 		beforeSend: function(){
 			console.log("Идет загрузка...");
