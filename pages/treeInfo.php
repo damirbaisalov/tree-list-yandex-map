@@ -74,7 +74,9 @@ include('../php/connect.php');
   </head>
   <body>    
 
-
+  <div class="col-8 mt-3">
+    <button class="btn btn-primary" id="back-home">Открыть карту</button>
+  </div>
     <div class="d-flex justify-content-center mt-3">
         <div class="card text-black bg-light mb-3" style="max-width: 25rem; text-center">
        
@@ -200,6 +202,11 @@ include('../php/connect.php');
       });
 
   });  
+
+  $('#back-home').click(function() {
+    window.location.replace("../Index.php");
+
+  });
 
 	</script>
 
