@@ -4,8 +4,16 @@
 
 <?php
 
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 session_start();
 include('php/connect.php');
+
+if(!isset($_SESSION['username'])){ //if login in session is not set
+    header("Location: login.php");
+}
 
 $sql = "SELECT lat,lon,areaName FROM trees ORDER BY areaName";
 
@@ -68,6 +76,7 @@ while ($row = mysqli_fetch_assoc($result))
                         aria-describedby="search-addon" />   
 					<button type="button" id="search-addon" class="btn btn-primary ml-1">Поиск</button>
 					<button type="button" id="search-all-tree" class="btn btn-dark ml-1" >Все деревья</button>
+					<a href = "logout.php" tite = "Logout" type="button" class="btn btn-danger ml-1">Выйти</a>
                     <!-- <input id="match" /> -->
         </div>
 
@@ -75,35 +84,14 @@ while ($row = mysqli_fetch_assoc($result))
                             <select class="form-control rounded" aria-label="Default select example" id="area">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
                                 <option disabled selected value> -- Выберите место -- </option>
-								<option value="Сквер репрессивонных">Сквер репрессивонных</option>
-                                <option value="Площадь Победы">Площадь победы</option>
-                                <option value="Сквер Конституции">Сквер конституции</option>
                             </select>
 							<select class="form-control rounded ml-1" aria-label="Default select example" id="specie">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
                                 <option disabled selected value> -- Выберите тип дерева -- </option>
-								<option value="Береза">Береза</option>
-                                <option value="Клён">Клён</option>
-                                <option value="Карагач">Карагач</option>
-								<option value="Сосна">Сосна</option>
-								<option value="Ель">Ель</option>
-								<option value="Береза бородавчатая">Береза бородавчатая</option>
-								<option value="Тополь черный">Тополь черный</option>
-								<option value="Яблоня ягодная">Яблоня ягодная</option>
-								<option value="Смородина золотистая">Смородина золотистая</option>
-								<option value="Яблоня">Яблоня</option>
-								<option value="Лиственница">Лиственница</option>
-								<option value="Рябина">Рябина</option>
-								<option value="Ясень">Ясень</option>
-								<option value="Акация">Акация</option>
-								<option value="Тополь серебристый">Тополь серебристый</option>
-								<option value="Вяз крупнолистный">Вяз крупнолистный</option>
-								<option value="Ель колючая">Ель колючая</option>
-								<option value="Клён татарский">Клён татарский</option>
-
 
                             </select> 
                             <button type="button" id="13" class="btn btn-primary ml-1">Сохранить</button>
+							<button type="button" id="addTree" class="btn btn-success ml-1" data-toggle="modal" data-target="#newTreeModal">Добавить дерево</button>
 
 							<!-- <input type="text" class="form-control rounded ml-5" id="poliv" placeholder="Полив" aria-label="Send"
                         	/>   
@@ -164,6 +152,40 @@ while ($row = mysqli_fetch_assoc($result))
 		</div>
 		</div>
 
+		<!-- Modal2 for new tree -->
+		<div class="modal fade" id="newTreeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Задайте параметры дерева</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+
+				<h6>Координаты(Широта):</h6>
+				<input type="text" class="form-control rounded" id="newTreeLat" aria-label="Send"/>
+				<h6 class="mt-2">Координаты(Долгота):</h6>
+				<input type="text" class="form-control rounded" id="newTreeLon" aria-label="Send"/>
+				<h6 class="mt-2">Вид дерева:</h6>
+				<input type="text" class="form-control rounded" id="newTreeSpecie" aria-label="Send"/>
+				<h6 class="mt-2">Возраст:</h6>  
+				<input class="form-control rounded" id="newTreeAge" placeholder="Возраст дерева" type="number" aria-label="Send"/>
+				<h6 class="mt-2">Название сквера:</h6>
+				<input type="text" class="form-control rounded" id="newTreeArea" aria-label="Send"/>
+				<h6 class="mt-2">Подрядчик:</h6>
+				<input type="text" class="form-control rounded" id="newTreeContractor" aria-label="Send"/>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+				<button type="button" id="insert-new-tree-btn" class="btn btn-primary">Добавить дерево в базу</button>
+			</div>
+			</div>
+		</div>
+		</div>
+
 		<div style="margin-top:5px">
 		<div id="map" style="width: 100%; height:350px"></div>
 		</div>
@@ -212,6 +234,41 @@ while ($row = mysqli_fetch_assoc($result))
 
 		// Сделаем у карты автомасштаб чтобы были видны все метки.
 		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
+		
+		
+
+		ListDistinctAreaNames();
+		ListDistinctSpecies();
+		///////////////////NEW TREE ADD WITH SESSION
+		$('#insert-new-tree-btn').click(function(){
+			var newTreeAreaName = $('#newTreeArea').val().trim();
+			var newProperty = $('#newProperty').val().trim();
+			var newTreeLat = $('#newTreeLat').val().trim();
+			var newTreeLon = $('#newTreeLon').val().trim();
+			var newTreeSpecie = $('#newTreeSpecie').val().trim();
+			var newTreeAge = $('#newTreeAge').val().trim();
+			var newTreeContractor = $('#newTreeContractor').val().trim();
+
+			if (newSpecie.length == 0 || newContractor.length == 0){
+				alert("пожалуйста заполните все обязательные поля");
+
+				$("#newTreeModal").modal('show');
+
+			} else {
+				insertNewTree(newTreeLat,newTreeLon,newTreeSpecie,newTreeAreaName,newTreeAge,newTreeContractor);
+				console.log(newTreeAreaName);
+				console.log(newProperty);
+				console.log(newTreeLat);
+				console.log(newTreeLon);
+				console.log(newTreeSpecie);
+				console.log(newTreeAge);
+				console.log(newTreeContractor);
+
+				// window.location.reload(false);
+				alert("Новый объект добавлен!");
+				$("#newTreeModal").modal('hide');
+			}
+		})
 
 		//DEFINE SEARCH BUTTON
 		$('#search-addon').click(function(){
@@ -220,6 +277,7 @@ while ($row = mysqli_fetch_assoc($result))
 		console.log(id);
 		if (id == "") {
 			$('#map').empty();
+			$('#area').empty();
 			init();
 		} else {
 			getTreesById(id);
@@ -228,6 +286,7 @@ while ($row = mysqli_fetch_assoc($result))
 
 		$('#search-all-tree').click(function(){
 			$('#map').empty();
+			$('#specie').empty();
 			init();
 		});
 
@@ -468,6 +527,30 @@ while ($row = mysqli_fetch_assoc($result))
 			}
 			});	
 		}
+	}
+
+	function insertNewTree(newLat,newLon,newSpecie,newArea,newAge,newContractor){
+			$.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'insert_new_tree': 'insert_new_tree',
+				'lat': newLat,
+				'lon': newLon,
+				'specie': newSpecie,
+				'area': newArea,
+				'age': newAge,
+				'contractor': newContractor
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				console.log(data);
+			}
+			});	
 	}
 
 	function updateTreeStatusById(id){
@@ -773,6 +856,51 @@ while ($row = mysqli_fetch_assoc($result))
 
 		return treeInfo;
 	}
+
+
+	function ListDistinctAreaNames() {
+         $.ajax({
+            url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'distinct_area': 'distinct_area'
+			},
+             success: function(data){
+                console.log("Doma gde off :"+ data);
+                tenantsList = JSON.parse(data);
+                console.log("Doma gde off  парсед :"+ tenantsList);
+                    $.each(tenantsList, function(key1, data1){
+                    $('#area').append(
+						'<option value="'+tenantsList[key1].areaName+'">'+tenantsList[key1].areaName+'</option>'
+						);						
+                    });
+                    
+            }
+        });
+    }
+
+	function ListDistinctSpecies() {
+         $.ajax({
+            url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'distinct_specie': 'distinct_specie'
+			},
+             success: function(data){
+                console.log("Doma gde off :"+ data);
+                tenantsList = JSON.parse(data);
+                console.log("Doma gde off  парсед :"+ tenantsList);
+                    $.each(tenantsList, function(key1, data1){
+                    $('#specie').append(
+						'<option value="'+tenantsList[key1].specie+'">'+tenantsList[key1].specie+'</option>'
+						);						
+                    });
+                    
+            }
+        });
+    }
 
 
 	</script>

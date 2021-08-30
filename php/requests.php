@@ -95,4 +95,96 @@
             echo json_encode($errorInfo);
         }
     }
+
+     //inserting new trees
+     if (isset($_POST["insert_new_tree"])) {
+        $lon = $_POST["lon"];
+        $lat = $_POST["lat"];
+        $specie = $_POST["specie"];
+        $age = $_POST["age"];
+        $area = $_POST["area"];
+        $contractor = $_POST["contractor"];
+     
+        $sqlTree = "INSERT INTO `trees` (`point`,`lon`, `lat`, `specie`, `contractor`, `property`, `areaName`, `dateCreate`, `poliv`, `age`, `grade`, `type`) 
+                    VALUES ('','$lon','$lat','$specie','$contractor','Государственный','$area', '2021-07-28', '', '$age', '', 0)";
+
+        if (mysqli_query($link, $sqlTree)) {
+            echo json_encode($successInfo);
+          } else {
+            echo json_encode($errorInfo);
+        }          
+    }
+
+    //distinct areas
+    if(isset($_POST["distinct_area"])){    
+        $sqlTree = "SELECT DISTINCT `areaName` FROM `trees`";
+
+        $massiv = array();
+        $result = mysqli_query($link, $sqlTree);
+        while ($row = mysqli_fetch_assoc($result)){
+            $massiv[] = $row;
+        }
+
+        echo json_encode($massiv);
+        
+    }
+
+    //distinct species
+    if(isset($_POST["distinct_specie"])){    
+        $sqlTree = "SELECT DISTINCT `specie` FROM `trees`";
+
+        $massiv = array();
+        $result = mysqli_query($link, $sqlTree);
+        while ($row = mysqli_fetch_assoc($result)){
+            $massiv[] = $row;
+        }
+
+        echo json_encode($massiv);
+        mysqli_close($link);
+    }
+
+    //insert new tree with photo
+    if(isset($_POST["insert_new_tree_photo"])){
+	
+        $lon = $_POST["lon"];
+        $lat = $_POST["lat"];
+        $specie = $_POST["specie"];
+        $age = $_POST["age"];
+        $area = $_POST["area"];
+        $contractor = $_POST["contractor"];
+        $path = "";
+        
+		// переменная для хранения результата
+        $data = 'Файл не был успешно загружен на сервер';
+        // путь для загрузки файлов
+        $upload_path = dirname(__FILE__) . '/uploads/';
+        // если файл был успешно загружен, то
+        if ($_FILES['file']['error'] == UPLOAD_ERR_OK) {
+          // получаем расширение исходного файла
+          $extension_file = mb_strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+          // получаем уникальное имя под которым будет сохранён файл 
+          $full_unique_name = $upload_path . uniqid('file_', true).'.'.$extension_file;
+          // перемещает файл из временного хранилища в указанную директорию
+          if (move_uploaded_file($_FILES['file']['tmp_name'], $full_unique_name)) {
+            // записываем в переменную $result ответ
+/*            $data = 'Файл загружен и доступен по адресу: <b>/' . substr($full_unique_name, strlen($_SERVER['DOCUMENT_ROOT'])+1) . '</b>';
+*/            
+            $path  = 'https://15000pvl.kz/' . substr($full_unique_name, strlen($_SERVER['DOCUMENT_ROOT'])+1);
+          } else {
+            // записываем в переменную $result сообщение о том, что произошла ошибка
+            $data = "Произошла обшибка при загрузке файла на сервер";
+          }
+        }
+		
+		$sqlTree = "INSERT INTO `trees` (`point`,`lon`, `lat`, `specie`, `contractor`, `property`, `areaName`, `dateCreate`, `poliv`, `age`, `grade`, `type`, `path`) 
+        VALUES ('','$lon','$lat','$specie','$contractor','Государственный','$area', '2021-07-28', '', '$age', '', 0, '$path')";
+
+        $result = mysqli_query($link, $sqlTree);
+		// $mysqli->close();
+        if ($result) {
+            $data = "Файл успешно загружен";
+        }
+		echo $data;
+		/*echo $data;*/
+    } 
 ?>
