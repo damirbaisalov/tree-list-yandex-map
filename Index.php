@@ -110,6 +110,7 @@ while ($row = mysqli_fetch_assoc($result))
                         <th scope="col">Подрядчик</th>
                         <th scope="col">Возраст дерева</th>
                         <th scope="col">Статус дерева</th>
+						<th scope="col">Жизненное состояние</th>
 						<th scope="col">Срубить дерево</th>
                         <th scope="col">Паспорт дерева</th>
 						<th scope="col">Удалить строку</th>
@@ -189,44 +190,122 @@ while ($row = mysqli_fetch_assoc($result))
 		<div style="margin-top:5px">
 		<div id="map" style="width: 100%; height:350px"></div>
 		</div>
+		<canvas id="draw-canvas"></canvas>
 
 	</div>
 
 	<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&amp;apikey=d811ec43-1783-4052-a752-a52f361f333d" type="text/javascript"></script>
 	<!-- <script src="//code.jquery.com/jquery-1.11.2.min.js"></script> -->
+	<script src="paintOnMap.js" type="text/javascript"></script>
 	<script type="text/javascript">
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 	var curLat = 0;
 	var curLon = 0;
 	var curId = 0;
+	var array1 = [];
+	var array2 = [];
+	var arrayAllTrees = [];
  
-	function init() {
+	async function init() {
 		var myMap = new ymaps.Map("map", {
-			center: [<?php echo $masspoint[0];?>],
-			zoom: 16
+			center: [52.27401, 77.00438],
+			zoom: 11
 		}, {
 			searchControlProvider: 'yandex#search'
 		});
 
+		var paintProcess;
+
+		// Опции многоугольника или линии.
+		var styles = [
+			{strokeColor: '#ff00ff', strokeOpacity: 0.7, strokeWidth: 3, fillColor: '#ff00ff', fillOpacity: 0.4},
+			{strokeColor: '#ff0000', strokeOpacity: 0.6, strokeWidth: 6, fillColor: '#ff0000', fillOpacity: 0.3},
+			{strokeColor: '#00ff00', strokeOpacity: 0.5, strokeWidth: 3, fillColor: '#00ff00', fillOpacity: 0.2},
+			{strokeColor: '#0000ff', strokeOpacity: 0.8, strokeWidth: 5, fillColor: '#0000ff', fillOpacity: 0.5},
+			{strokeColor: '#000000', strokeOpacity: 0.6, strokeWidth: 8, fillColor: '#000000', fillOpacity: 0.3},
+		];
+
+		var currentIndex = 0;
+
+		// Создадим кнопку для выбора типа рисуемого контура.
+		var button = new ymaps.control.Button({data: {content: 'Обновить карту'}, options: {maxWidth: 150}});
+		myMap.controls.add(button);
+
+		button.events.add('click', function () {
+			$('#map').empty();
+			$('#area').empty();
+			init();
+		});
+
+		// Подпишемся на событие нажатия кнопки мыши.
+		myMap.events.add('mousedown', function (e) {
+			// Если кнопка мыши была нажата с зажатой клавишей "alt", то начинаем рисование контура.
+			if (e.get('altKey')) {
+				if (currentIndex == styles.length - 1) {
+					currentIndex = 0;
+				} else {
+					currentIndex += 1;
+				}
+				paintProcess = ymaps.ext.paintOnMap(myMap, e, {style: styles[currentIndex]});
+			}
+		});
+
 		var myCollection = new ymaps.GeoObjectCollection(); 
+
+			// Подпишемся на событие отпускания кнопки мыши.
+		myMap.events.add('mouseup', function (e) {
+			var cnt = 0;
+			if (paintProcess) {
+
+				// Получаем координаты отрисованного контура.
+				var coordinates = paintProcess.finishPaintingAt(e);
+				paintProcess = null;
+				// В зависимости от состояния кнопки добавляем на карту многоугольник или линию с полученными координатами.
+				var geoObject = new ymaps.Polygon([coordinates], {}, styles[currentIndex]);
+
+				myCollection.add(geoObject);
+
+				// await getAllTrees();
+				<?php for ($i=0;$i<count($masspoint);$i++): ?> 
+					if (geoObject.geometry.contains([<?php echo $masspoint[$i]; ?>]))
+					 {
+						 cnt+=1;
+					 }
+				<?php endfor; ?>
+
+			}
+			alert("Сумма скверов: " + cnt);
+		});
+
+		
+		// console.log(array1.length);
 	
 		<?php for ($i=0;$i<count($masspoint);$i++): ?>
-	
+
+		var dataConverted = "";
+		var areaName = '<?php echo $areaNameForBalloonArray[$i];?>';
+		await getSpeciesOfTrees1(areaName);
+
+		console.log(array1.length);
+
+
+		for(var i=0; i<array1.length; i++){
+			var specieConverted = array1[i]["specie"];
+			await getSpeciesCountOfTrees1(areaName, specieConverted);
+			console.log(array2);
+			dataConverted += convertDataSpeciesForAreaBalloon(array1[i], array2[0]);
+		}
+
 		var myPlacemark = new ymaps.Placemark([
 			<?php echo $masspoint[$i]; ?>
 		], {
+			balloonContentHeader:'<?php echo $areaNameForBalloonArray[$i]; ?>',
+			balloonContentBody: dataConverted,
+			balloonContentFooter: '<button class="btn btn-primary" onclick="getTreesByArea(\''+areaName+'\')">Перейти к парку</button>',
 			hintContent: '<?php echo "Название сквера: " . $areaNameForBalloonArray[$i]; ?>'
-		}, {
-			hasBalloon: false,
-			preset: 'islands#icon',
-			iconColor: '#0000ff'
 		});
-	
+
 		myCollection.add(myPlacemark);
-		myPlacemark.events.add('click', function () {
-			var areaName = '<?php echo $areaNameForBalloonArray[$i];?>';
-			getTreesByArea(areaName);
-        });
 	
 		<?php endfor; ?>
 
@@ -343,7 +422,7 @@ while ($row = mysqli_fetch_assoc($result))
 
 	}
 
-	ymaps.ready(init);
+	ymaps.ready(['ext.paintOnMap']).then(init).catch(console.error);;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 	function deleteRow(btn , id, poliv, areaNameCol) {
 			console.log(id);
@@ -397,6 +476,7 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
                                                     <td>'+tenantsList[key1].status+'</td>\
+													<td>'+tenantsList[key1].sostoyanie+'</td>\
 													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
 													<td><a href="pages/treeInfo.php?id='+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
 													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
@@ -412,6 +492,7 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
 													<td>'+tenantsList[key1].status+'</td>\
+													<td>'+tenantsList[key1].sostoyanie+'</td>\
 													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
 													<td><a href="pages/treeInfo.php?id='+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
 													<td><button class="btn btn-danger" onclick=(removeRow(this))>Удалить</button></td>\
@@ -446,38 +527,98 @@ while ($row = mysqli_fetch_assoc($result))
 		$('#newContractor').val(contractor);
 	}
 
-		// function treeUpdatePoliv(id, poliv, areaNameCol)
-        // {
-		// 	console.log("clicked "+ poliv + " " + id);
-        //     jQuery.ajax({
-        //         type: 'POST',
-        //         url: 'php/updatePoliv.php',
-        //         data:{
-        //             id: id,
-		// 			poliv: poliv
-        //         },
-        //         success: function(data){
-        //             // console.log("Tree of park:");
-        //             // tenantsList = JSON.parse(data);
-        //             // console.log("Tree of park :"+ tenantsList);
+	async function getAllTrees() {
+		await $.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'getAllTrees': 'getAllTrees',
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				// startFrom+=501;
 
-		// 			alert("ПОЛИВ ДЕРЕВА " + id + " ОБНОВЛЕН");
-					
-				
-		// 			$('#map').empty();
-		// 			// MapsLoadTreeByArea(areaNameCol);
-		// 			init();
-		// 			window.location.reload(false);
-        //         }
-        //     });
-        // }
+				data1 = JSON.parse(data);
+				// console.log(data);
+				// returnLoadedSpeciesCountOfTress(data1);
+
+				// return data1;
+				arrayAllTrees = data1;
+				console.log(arrayAllTrees);
+
+			}
+		});	
+	}
+
+	async function getSpeciesOfTrees1(area) {
+		await $.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'get_species_selected_area': 'get_species_selected_area',
+				'area': area
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				// startFrom+=501;
+
+				data1 = JSON.parse(data);
+				console.log(data);
+				// returnLoadedSpeciesCountOfTress(data1);
+
+				// return data1;
+				array1 = data1;
+				console.log(array1.length);
+
+			}
+		});	
+	}
+
+	// function returnLoadedTreesByArea(data) {
+	// 	return data
+	// }
+
+	async function getSpeciesCountOfTrees1(area,specie) {
+		await $.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'get_count_species_selected_area': 'get_count_species_selected_area',
+				'area': area,
+				'specie': specie
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				// startFrom+=501;
+
+				data1 = JSON.parse(data);
+				console.log(data);
+				// returnLoadedSpeciesCountOfTress(data1);
+
+				array2 = data1;
+				console.log(array2.length);
+
+			}
+		});	
+	}
+
+	// function returnLoadedSpeciesCountOfTress(data) {
+	// 	return data;
+	// }
     
-
-	
-	
-	
 	function getTreesByArea(area){
-		
 			$.ajax({
 			url:'php/requests.php',
 			type:'post',
@@ -495,7 +636,7 @@ while ($row = mysqli_fetch_assoc($result))
 
 				data1 = JSON.parse(data);
 				console.log(data);
-				loadTreesByArea(data1);
+				loadSpeciesOfTrees1(data1);
 
 			}
 			});	
@@ -731,6 +872,75 @@ while ($row = mysqli_fetch_assoc($result))
 
 	}
 
+	function loadSpeciesOfTrees1(data) {
+		$('#map').empty();
+
+		var myMap1 = new ymaps.Map("map", {
+			center: [52.269053, 76.961113],
+			zoom: 12
+		}, {
+			searchControlProvider: 'yandex#search'
+		});
+
+		clusterer = new ymaps.Clusterer({
+     
+            preset: 'islands#icon',
+			iconColor: '#0000ff',
+           
+            groupByCoordinates: false,
+            
+            clusterDisableClickZoom: true,
+            clusterHideIconOnBalloonOpen: false,
+            geoObjectHideIconOnBalloonOpen: false
+        });
+		
+		var geoObjects = [];
+
+		for(var i=0; i<data.length; i++){
+	
+			var dataConverted = convertDataForHintBalloon(data[i]);
+			var selectedTreeId = data[i]["id"];
+
+				var myPlacemark = new ymaps.Placemark([
+					data[i]["lat"], data[i]["lon"]
+				], {
+					balloonContentBody: dataConverted,
+					balloonContentFooter: '<button class="btn btn-primary" onclick=(listTreesSelected('+selectedTreeId+'))>Добавить дерево в таблицу</button>',
+					clusterCaption: 'дерево <strong>' + data[i]["id"] + '</strong>'
+				}, {
+					hasBalloon: false,
+					preset: 'islands#icon',
+					iconColor: '#0000ff'
+				});
+				// myCollection1.add(myPlacemark);
+
+				geoObjects[i] = myPlacemark;
+
+				myPlacemark.events.add('click', function () {
+					// var idOfTree  = data[i]["id"];
+					listTreesSelected(selectedTreeId);
+					console.log(selectedTreeId);
+        		});
+			
+		}
+
+		clusterer.options.set({
+        gridSize: 80,
+        clusterDisableClickZoom: true
+    	});
+
+		clusterer.add(geoObjects);
+    	myMap1.geoObjects.add(clusterer);
+
+		// myMap1.geoObjects.add(myCollection1);
+
+		// Сделаем у карты автомасштаб чтобы были видны все метки.
+		// myMap1.setBounds(myCollection1.getBounds(),{checkZoomRange:true, zoomMargin:9});
+
+		myMap1.setBounds(clusterer.getBounds(), {
+        checkZoomRange: true
+   		 });
+	}
 
 	function loadTreesByArea(data){
 		$('#map').empty();
@@ -842,7 +1052,6 @@ while ($row = mysqli_fetch_assoc($result))
 
 	}
 
-	
 	function convertDataForHintBalloon(data) {
 		var id = "id: " + data["id"] + " <br>";
 		var specie = "Тип: " + data["specie"] + " <br>";
@@ -851,11 +1060,20 @@ while ($row = mysqli_fetch_assoc($result))
 		var areaName = "Место: " + data["areaName"] + " <br>";
 		var poliv = "Полив: " + data["poliv"] + " <br>";
 		var status = "Статус: " + data["status"] + " <br>";
+		var lifeStatus = "Жизненное состояние: " + data["sostoyanie"] + " <br>";
 
-		var treeInfo = id + " " + specie + " " + contractor + " " + property + " " + areaName + " " + poliv + " " + status;
+		var treeInfo = id + " " + specie + " " + contractor + " " + property + " " + areaName + " " + poliv + " " + status + " " + lifeStatus;
 
 		return treeInfo;
 	}
+
+	function convertDataSpeciesForAreaBalloon(dataSpecieByArea, dataSpecieCount) {
+		var areaSpecieInfo = dataSpecieByArea["specie"] + ": " +  dataSpecieCount["specieCount"] + " <br>";
+
+		return areaSpecieInfo;
+	}
+
+
 
 
 	function ListDistinctAreaNames() {

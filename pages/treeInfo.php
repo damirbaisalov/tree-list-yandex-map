@@ -134,6 +134,7 @@ include('../php/connect.php');
                                 <p class="card-text">Вид дерева: '+tenantsList[key1].specie+'</p>\
                                 <p class="card-text">Возраст дерева: '+tenantsList[key1].age+'</p>\
                                 <p class="card-text">Полив: '+tenantsList[key1].poliv+'</p>\
+                                <p class="card-text">Жизненное состояние: '+tenantsList[key1].sostoyanie+'</p>\
                                 <p class="card-text">Подрядчик: '+tenantsList[key1].contractor+'</p>'
                             );					
                         });
