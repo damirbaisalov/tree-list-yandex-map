@@ -187,4 +187,43 @@
 		echo $data;
 		/*echo $data;*/
     } 
+
+     //insert new tree with photo
+     if(isset($_POST["insert_only_photo"])){
+	
+        $path = "";
+        
+		// переменная для хранения результата
+        $data = 'Файл не был успешно загружен на сервер';
+        // путь для загрузки файлов
+        $upload_path = dirname(__FILE__) . '/uploads/';
+        // если файл был успешно загружен, то
+        if ($_FILES['file']['error'] == UPLOAD_ERR_OK) {
+          // получаем расширение исходного файла
+          $extension_file = mb_strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+          // получаем уникальное имя под которым будет сохранён файл 
+          $full_unique_name = $upload_path . uniqid('file_', true).'.'.$extension_file;
+          // перемещает файл из временного хранилища в указанную директорию
+          if (move_uploaded_file($_FILES['file']['tmp_name'], $full_unique_name)) {
+            // записываем в переменную $result ответ
+/*            $data = 'Файл загружен и доступен по адресу: <b>/' . substr($full_unique_name, strlen($_SERVER['DOCUMENT_ROOT'])+1) . '</b>';
+*/            
+            $path  = 'https://15000pvl.kz/' . substr($full_unique_name, strlen($_SERVER['DOCUMENT_ROOT'])+1);
+          } else {
+            // записываем в переменную $result сообщение о том, что произошла ошибка
+            $data = "Произошла обшибка при загрузке файла на сервер";
+          }
+        }
+		
+		$sqlTree = "INSERT INTO `trees` (`point`,`lon`, `lat`, `specie`, `contractor`, `property`, `areaName`, `dateCreate`, `poliv`, `age`, `grade`, `type`, `path`) 
+        VALUES ('','','','','','Государственный','', '2021-07-28', '', '1', '', 0, '$path')";
+
+        $result = mysqli_query($link, $sqlTree);
+		// $mysqli->close();
+        if ($result) {
+            $data = "Файл успешно загружен";
+        }
+		echo $data;
+		/*echo $data;*/
+    } 
 ?>
