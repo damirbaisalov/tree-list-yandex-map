@@ -4,10 +4,10 @@
     $successInfo = "success";
     $errorInfo = "error occurred!";
 
-    if(isset($_POST['getAllTrees'])){
+    if(isset($_POST['get_unique_areas_for_load'])){
         $massiv = Array();
 
-        $sqlTree = "SELECT * FROM trees WHERE `status`=0'";
+        $sqlTree = "SELECT lat,lon,areaName FROM `trees` GROUP BY `areaName`";
         // $result = mysql_query($sqlDomksk) or die (mysql_error());
         $result = mysqli_query($link, $sqlTree);
         while ($row = mysqli_fetch_assoc($result)){
@@ -49,6 +49,21 @@
     }
 
      //filter species by area
+     if(isset($_POST["get_grouped_specie_and_count"])){
+        $area = $_POST["area"];
+        
+        $sqlTree = "SELECT specie,COUNT(*) as countSpecie FROM trees WHERE `areaName`='$area' group by `specie`";
+
+        $massiv = array();
+        $result = mysqli_query($link, $sqlTree);
+        while ($row = mysqli_fetch_assoc($result)){
+            $massiv[] = $row;
+        }
+
+        echo json_encode($massiv);
+    }
+
+     //filter species by area
      if(isset($_POST["get_count_species_selected_area"])){
         $area = $_POST["area"];
         $specie = $_POST["specie"];
@@ -79,6 +94,23 @@
 
         echo json_encode($massiv);
     }
+
+    //filter count trees by area
+    if(isset($_POST["countTreesByArea"])){
+        $area = $_POST["area"];
+        
+        $sqlTree = "SELECT COUNT(*) as countTrees FROM `trees` WHERE `areaName` ='$area' AND `status` = 0";
+
+        $massiv = array();
+        $result = mysqli_query($link, $sqlTree);
+        while ($row = mysqli_fetch_assoc($result)){
+            $massiv[] = $row;
+        }
+
+        echo json_encode($massiv);
+    }
+
+
 
     //filter trees by specie
     if(isset($_POST["onlySpecie"])){
@@ -144,7 +176,7 @@
     }
 
      //inserting new trees
-     if (isset($_POST["insert_new_tree"])) {
+     if (isset($_POST["insert_new_tree_2"])) {
         $lon = $_POST["lon"];
         $lat = $_POST["lat"];
         $specie = $_POST["specie"];
@@ -154,6 +186,26 @@
      
         $sqlTree = "INSERT INTO `trees` (`point`,`lon`, `lat`, `specie`, `contractor`, `property`, `areaName`, `dateCreate`, `poliv`, `age`, `grade`, `type`) 
                     VALUES ('','$lon','$lat','$specie','$contractor','Государственный','$area', '2021-07-28', '', '$age', '', 0)";
+
+        if (mysqli_query($link, $sqlTree)) {
+            echo json_encode($successInfo);
+          } else {
+            echo json_encode($errorInfo);
+        }          
+    }
+
+     //inserting new trees
+     if (isset($_POST["insert_new_tree"])) {
+        $lon = $_POST["lon"];
+        $lat = $_POST["lat"];
+        $specie = $_POST["specie"];
+        $age = $_POST["age"];
+        $area = $_POST["area"];
+        $contractor = $_POST["contractor"];
+        $sostoyanie = $_POST["sostoyanie"];
+     
+        $sqlTree = "INSERT INTO `trees` (`point`,`lon`, `lat`, `specie`, `contractor`, `property`, `areaName`, `dateCreate`, `poliv`, `age`, `grade`, `type`,`sostoyanie`) 
+                    VALUES ('','$lon','$lat','$specie','$contractor','Государственный','$area', '0000-00-00', '', '$age', '', 0, '$sostoyanie')";
 
         if (mysqli_query($link, $sqlTree)) {
             echo json_encode($successInfo);
@@ -172,8 +224,8 @@
             $massiv[] = $row;
         }
 
+        mysqli_close($link);
         echo json_encode($massiv);
-        
     }
 
     //distinct species
@@ -185,13 +237,13 @@
         while ($row = mysqli_fetch_assoc($result)){
             $massiv[] = $row;
         }
-
-        echo json_encode($massiv);
+        
         mysqli_close($link);
+        echo json_encode($massiv);
     }
 
      //distinct contractor
-     if(isset($_POST["distinct_contractor"])){    
+    if(isset($_POST["distinct_contractor"])){    
         $sqlTree = "SELECT DISTINCT `contractor` FROM `trees`";
 
         $massiv = array();
@@ -200,6 +252,34 @@
             $massiv[] = $row;
         }
 
+        echo json_encode($massiv);
+        
+    }
+
+    //distinct ages
+    if(isset($_POST["distinct_ages"])){    
+        $sqlTree = "SELECT DISTINCT `age` FROM `trees`";
+
+        $massiv = array();
+        $result = mysqli_query($link, $sqlTree);
+        while ($row = mysqli_fetch_assoc($result)){
+            $massiv[] = $row;
+        }
+
+        echo json_encode($massiv);
+        
+    }
+
+    //distinct ages
+    if(isset($_POST["distinct_life_status"])){    
+        $sqlTree = "SELECT DISTINCT `sostoyanie` FROM `trees`";
+
+        $massiv = array();
+        $result = mysqli_query($link, $sqlTree);
+        while ($row = mysqli_fetch_assoc($result)){
+            $massiv[] = $row;
+        }
+        
         echo json_encode($massiv);
         
     }
@@ -240,7 +320,7 @@
 // 		$sqlTree = "INSERT INTO `trees` (`point`,`lon`, `lat`, `specie`, `contractor`, `property`, `areaName`, `dateCreate`, `poliv`, `age`, `grade`, `type`, `path`) 
 //         VALUES ('','$lon','$lat','$specie','$contractor','Государственный','$area', '2021-07-28', '', '$age', '', 0, '$path')";
 
-//         $result = mysqli_query($link, $sqlTree);
+//         $result = mysqli_query($link, $sqlTreex);
 // 		// $mysqli->close();
 //         if ($result) {
 //             $data = "Файл успешно загружен";

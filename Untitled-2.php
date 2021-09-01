@@ -14,31 +14,6 @@ include('php/connect.php');
 if(!isset($_SESSION['username'])){ //if login in session is not set
     header("Location: login.php");
 }
-
-$sql = "SELECT * FROM `trees_areaName`";
-
-$result = mysqli_query($link, $sql);
-
-if (!$result) {
-    echo "Ошибка ($sql) from DB: " . mysqli_error();
-    exit;
-}
-else{
-    //echo "подключение";
-}
-
-while ($row = mysqli_fetch_assoc($result))
-{
-		$lat = $row['lat'];
-		$lon = $row['lon'];
-		$point = $lat.",".$lon;
-		$masspoint[] = $point;
-
-		$areaName = $row['name'];
-
-		// $areaName2ForBalloon = $row['areaName'];
-		$areaNameForBalloonArray[] = $areaName;
-}
 ?>
 
     <!-- Required meta tags -->
@@ -73,11 +48,11 @@ while ($row = mysqli_fetch_assoc($result))
 		<div class="col-8 input-group rounded mb-3" style="margin-top: 10px"  >
                             <select class="form-control rounded" aria-label="Default select example" id="area">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
-                                <option selected value>-- Выберите место --</option>
+                                <option disabled selected value> -- Выберите место -- </option>
                             </select>
 							<select class="form-control rounded ml-1" aria-label="Default select example" id="specie">
                                 <!-- <option selected>Выберите к какой инстанции отправить обращение</option> -->
-                                <option selected value>-- Выберите тип дерева --</option>
+                                <option disabled selected value> -- Выберите тип дерева -- </option>
 
                             </select> 
                             <button type="button" id="13" class="btn btn-primary ml-1">Сохранить</button>
@@ -97,7 +72,9 @@ while ($row = mysqli_fetch_assoc($result))
                         <th scope="col">Вид</th>
                         <th scope="col">Название парка</th>
                         <th scope="col">Тип</th>
+                        <th scope="col">Подрядчик</th>
                         <th scope="col">Возраст дерева</th>
+                        <th scope="col">Статус дерева</th>
 						<th scope="col">Жизненное состояние</th>
 						<th scope="col">Срубить дерево</th>
                         <th scope="col">Паспорт дерева</th>
@@ -108,27 +85,6 @@ while ($row = mysqli_fetch_assoc($result))
                 </tbody>
             </table>
         </div>
-
-		<!-- Small modal -->
-		<div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-		<div class="modal-dialog" role="document">
-			<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="exampleModalLabel">Загрузка</h5>
-			</div>
-			<div class="modal-body">
-			<div class="d-flex justify-content-center">
-			<div class="spinner-border" role="status">
-				<span class="sr-only">Loading...</span>
-			</div>
-			</div>
-			</div>
-			<div class="modal-footer">
-		
-			</div>
-			</div>
-		</div>
-		</div>
 
 		<!-- Modal -->
 		<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -197,9 +153,9 @@ while ($row = mysqli_fetch_assoc($result))
 		</div>
 
 		<div style="margin-top:5px">
-		<div id="map" style="width: 100%; height:450px"></div>
-		<canvas id="draw-canvas"></canvas>
+		<div id="map" style="width: 100%; height:350px"></div>
 		</div>
+		<canvas id="draw-canvas"></canvas>
 
 	</div>
 
@@ -215,138 +171,11 @@ while ($row = mysqli_fetch_assoc($result))
 	var array2 = [];
 	var arrayAllTrees = [];
 	var getCountTreesOfAreaArray = [];
-	var treeNumbers = 0;
+	var getSpecieGroupedAndCount = [];
  
-	async function init() {
-
-		$('#loadingModal').modal({backdrop: 'static', keyboard: false}) 
-		$('#loadingModal').modal('show');
-
-		var myMap = new ymaps.Map("map", {
-			center: [52.27401, 77.00438],
-			zoom: 11
-		}, {
-			searchControlProvider: 'yandex#search'
-		});
-
-		var paintProcess;
-
-		// Опции многоугольника или линии.
-		var styles = [
-			{strokeColor: '#ff00ff', strokeOpacity: 0.7, strokeWidth: 3, fillColor: '#ff00ff', fillOpacity: 0.4},
-			{strokeColor: '#ff0000', strokeOpacity: 0.6, strokeWidth: 6, fillColor: '#ff0000', fillOpacity: 0.3},
-			{strokeColor: '#00ff00', strokeOpacity: 0.5, strokeWidth: 3, fillColor: '#00ff00', fillOpacity: 0.2},
-			{strokeColor: '#0000ff', strokeOpacity: 0.8, strokeWidth: 5, fillColor: '#0000ff', fillOpacity: 0.5},
-			{strokeColor: '#000000', strokeOpacity: 0.6, strokeWidth: 8, fillColor: '#000000', fillOpacity: 0.3},
-		];
-
-		var currentIndex = 0;
-
-		// Создадим кнопку для выбора типа рисуемого контура.
-		var button = new ymaps.control.Button({data: {content: 'Обновить карту'}, options: {maxWidth: 150}});
-		myMap.controls.add(button);
-
-		button.events.add('click', function () {
-			$('#map').empty();
-			$('#area').empty();
-			$('#specie').empty();
-			init();
-		});
-
-		// Подпишемся на событие нажатия кнопки мыши.
-		myMap.events.add('mousedown', function (e) {
-			// Если кнопка мыши была нажата с зажатой клавишей "alt", то начинаем рисование контура.
-			if (e.get('altKey')) {
-				if (currentIndex == styles.length - 1) {
-					currentIndex = 0;
-				} else {
-					currentIndex += 1;
-				}
-				paintProcess = ymaps.ext.paintOnMap(myMap, e, {style: styles[currentIndex]});
-			}
-		});
-
-		var myCollection = new ymaps.GeoObjectCollection(); 
-
-			// Подпишемся на событие отпускания кнопки мыши.
-			myMap.events.add('mouseup', async function (e) {
-			var cnt = 0;
-			cnt = parseInt(cnt);
-			if (paintProcess) {
-
-				// Получаем координаты отрисованного контура.
-				var coordinates = paintProcess.finishPaintingAt(e);
-				paintProcess = null;
-				// В зависимости от состояния кнопки добавляем на карту многоугольник или линию с полученными координатами.
-				var geoObject = new ymaps.Polygon([coordinates], {}, styles[currentIndex]);
-
-				myCollection.add(geoObject);
-
-				
-				<?php for ($i=0;$i<count($masspoint);$i++): ?> 
-					if (geoObject.geometry.contains([<?php echo $masspoint[$i]; ?>]))
-					 {
-						var areaName = '<?php echo $areaNameForBalloonArray[$i];?>';
-						console.log(areaName);
-						await getCountTreesOfArea(areaName);
-						var intVal = parseInt(getCountTreesOfAreaArray[0]["countTrees"]);
-						cnt+= intVal;
-					 }
-				<?php endfor; ?>
-
-			}
-			alert("Количество деревьев в полигоне: " + cnt);
-		});
-
+	function init() {
 		
-		// console.log(array1.length);
-		var lastEl = '<?php echo count($masspoint)?>';
-		lastEl = lastEl-1;
-		console.log(lastEl);
-
-		<?php for ($i=0;$i<count($masspoint);$i++): ?>
-
-		treeNumbers = 0;
-		treeNumbers = parseInt(treeNumbers);
- 
-		var index = '<?php echo $i?>';
-
-		var dataConverted = "";
-		var areaName = '<?php echo $areaNameForBalloonArray[$i];?>';
-		await getSpeciesOfTrees1(areaName);
-
-		console.log(array1.length);
-
-
-		for(var i=0; i<array1.length; i++){
-			var specieConverted = array1[i]["specie"];
-			await getSpeciesCountOfTrees1(areaName, specieConverted);
-			console.log(array2);
-			dataConverted += convertDataSpeciesForAreaBalloon(array1[i], array2[0]);
-		}
-
-		var myPlacemark = new ymaps.Placemark([
-			<?php echo $masspoint[$i]; ?>
-		], {
-			balloonContentHeader:'<?php echo $areaNameForBalloonArray[$i]; ?>',
-			balloonContentBody: dataConverted + "<br>" + "Всего деревьев: " + treeNumbers,
-			balloonContentFooter: '<button class="btn btn-primary" onclick="getTreesByArea(\''+areaName+'\')">Перейти к парку</button>',
-			hintContent: '<?php echo "Название сквера: " . $areaNameForBalloonArray[$i]; ?>'
-		});
-
-		myCollection.add(myPlacemark);
-
-		if (lastEl == index) {
-			$('#loadingModal').modal('hide');
-		}
-	
-		<?php endfor; ?>
-
-		myMap.geoObjects.add(myCollection);
-
-		// Сделаем у карты автомасштаб чтобы были видны все метки.
-		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
-
+		getUniqueAreas();
 		ListDistinctAreaNames();
 		ListDistinctSpecies();
 		///////////////////NEW TREE ADD WITH SESSION
@@ -382,44 +211,40 @@ while ($row = mysqli_fetch_assoc($result))
 
 		//DEFINE SEARCH BUTTON
 		$('#search-addon').click(function(){
-		var id = $('#id').val();
+			var id = $('#id').val();
 
-		console.log(id);
-		if (id == "") {
-			// $('#map').empty();
-			// $('#area').empty();
-			// $('#specie').empty();
-			// init();
-		} else {
-			getTreesById(id);
-		}
+			console.log(id);
+			if (id == "") {
+				$('#map').empty();
+				$('#area').empty();
+				init();
+			} else {
+				getTreesById(id);
+			}
 		});
 
 		$('#search-all-tree').click(function(){
 			$('#map').empty();
-			$('#area').empty();
 			$('#specie').empty();
 			init();
 		});
 
 		$('#13').click(function(){
-		var area = $('#area').val();
-		var specie = $('#specie').val();
-		console.log(area);
-		console.log(specie);
-		
-		if (area == null && specie == null) {
-
-		} else if ((specie === "" && area != "") || (specie == "-- Выберите тип дерева --" && area != "")) {
-			getTreesByArea(area);
-			// let timerId = setInterval(function() { getTreesFirstThread(area); }, 3000);
-		} else if ((area === "" && specie != "") || (area == "-- Выберите место --" && specie != "")) {
-			getTreesBySpecie(specie);
-		} else if (area != "" && specie != "")	{
-			getTreesBySpecieAndArea(area, specie);
-		} else {
+			var area = $('#area').val();
+			var specie = $('#specie').val();
+			console.log(area);
+			console.log(specie);
 			
-		}
+			if (area == null && specie == null) {
+
+			} else if (specie == null && area != null) {
+				getTreesByArea(area);
+				// let timerId = setInterval(function() { getTreesFirstThread(area); }, 3000);
+			} else if (area == null && specie != null) {
+				getTreesBySpecie(specie);
+			} else 	{
+				getTreesBySpecieAndArea(area, specie);
+			}
 		});
 
 		$('#insert-tree-btn').click(function() {
@@ -473,6 +298,8 @@ while ($row = mysqli_fetch_assoc($result))
     }
 
 	function removeRow(btn) {
+
+
             var row = btn.parentNode.parentNode;
             row.parentNode.removeChild(row);
 			// alert("Полив обновлен");
@@ -506,7 +333,9 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].specie+'</td>\
                                                     <td>'+tenantsList[key1].areaName+'</td>\
                                                     <td>'+tenantsList[key1].property+'</td>\
+                                                    <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
+                                                    <td>'+tenantsList[key1].status+'</td>\
 													<td>'+tenantsList[key1].sostoyanie+'</td>\
 													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
 													<td><a href="pages/treeInfo.php?id='+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
@@ -520,7 +349,9 @@ while ($row = mysqli_fetch_assoc($result))
                                                     <td>'+tenantsList[key1].specie+'</td>\
                                                     <td>'+tenantsList[key1].areaName+'</td>\
                                                     <td>'+tenantsList[key1].property+'</td>\
+                                                    <td>'+tenantsList[key1].contractor+'</td>\
                                                     <td>'+tenantsList[key1].age+'</td>\
+													<td>'+tenantsList[key1].status+'</td>\
 													<td>'+tenantsList[key1].sostoyanie+'</td>\
 													<td><button type="button" id="open-model-btn" onclick="treeChopInfo(\''+areaNameForChop+'\',\''+propertyForChop+'\',\''+contractorForChop+'\')" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Срубить</button></td>\
 													<td><a href="pages/treeInfo.php?id='+tenantsList[key1].id+'" class="btn btn-primary">Перейти</a></td>\
@@ -556,6 +387,112 @@ while ($row = mysqli_fetch_assoc($result))
 		$('#newContractor').val(contractor);
 	}
 
+	function getUniqueAreas() {
+		$.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'get_unique_areas_for_load': 'get_unique_areas_for_load',
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				// startFrom+=501;
+
+				data1 = JSON.parse(data);
+				loadTreesByUniqueArea(data1);
+				// console.log(data);
+				// returnLoadedSpeciesCountOfTress(data1);
+
+				// return data1;
+				// arrayAllTrees = data1;
+				// console.log(arrayAllTrees);
+			}
+		});	
+	}
+
+	async function loadTreesByUniqueArea(data){
+		$('#map').empty();
+
+		var myMap = new ymaps.Map("map", {
+			center: [52.269053, 76.961113],
+			zoom: 12
+		}, {
+			searchControlProvider: 'yandex#search'
+		});
+		
+		var myCollection = new ymaps.GeoObjectCollection();
+
+		for(var i=0; i<data.length; i++){
+			
+			var areaName = data[i]["areaName"];
+			var dataConverted = "";
+
+			await getGroupedSpeciesAndCount(areaName);
+
+			for(var i=0; i<getSpecieGroupedAndCount.length; i++){
+				// var specieConverted = array1[i]["specie"];
+				// await getSpeciesCountOfTrees1(areaName, specieConverted);
+				// console.log(array2);
+				dataConverted += convertDataSpeciesForAreaBalloon(getSpecieGroupedAndCount[i]);
+			}
+
+			var myPlacemark = new ymaps.Placemark([
+				data[i]["lat"], data[i]["lon"]
+			], {
+				balloonContentHeader: areaName,
+				balloonContentBody: dataConverted,
+				balloonContentFooter: '<button class="btn btn-primary" onclick="getTreesByArea(\''+areaName+'\')">Перейти к парку</button>',
+				hintContent: 'Название сквера: ' + areaName
+			});
+
+			myCollection.add(myPlacemark);
+
+				// myPlacemark.events.add('click', function () {
+				// 	listTreesSelected(selectedTreeId);
+				// 	console.log(selectedTreeId);
+        		// });
+			
+		}
+
+		myMap.geoObjects.add(myCollection);
+
+		// Сделаем у карты автомасштаб чтобы были видны все метки.
+		myMap.setBounds(myCollection.getBounds(),{checkZoomRange:true, zoomMargin:9});
+
+	}
+
+
+	function getGroupedSpeciesAndCount(area) {
+		$.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'get_grouped_specie_and_count': 'get_grouped_specie_and_count',
+				'area': area
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				// startFrom+=501;
+
+				data1 = JSON.parse(data);
+				console.log(data1);
+				// returnLoadedSpeciesCountOfTress(data1);
+
+				// return data1;
+				getSpecieGroupedAndCount = data1;
+				console.log(getSpecieGroupedAndCount.length);
+			}
+		});	
+	}
+
 	async function getSpeciesOfTrees1(area) {
 		await $.ajax({
 			url:'php/requests.php',
@@ -584,6 +521,10 @@ while ($row = mysqli_fetch_assoc($result))
 		});	
 	}
 
+	// function returnLoadedTreesByArea(data) {
+	// 	return data
+	// }
+
 	async function getSpeciesCountOfTrees1(area,specie) {
 		await $.ajax({
 			url:'php/requests.php',
@@ -611,6 +552,37 @@ while ($row = mysqli_fetch_assoc($result))
 			}
 		});	
 	}
+
+
+	async function getCountTreesOfArea(area) {
+		await $.ajax({
+			url:'php/requests.php',
+			type:'post',
+			cache:false,
+			data:{
+				'countTreesByArea': 'countTreesByArea',
+				'area': area
+			},
+			dataType:'html',
+			beforeSend: function(){
+				console.log("Идет загрузка...");
+			},
+			success:function(data){
+				// startFrom+=501;
+
+				data1 = JSON.parse(data);
+				console.log(data);
+				// returnLoadedSpeciesCountOfTress(data1);
+
+				getCountTreesOfAreaArray = data1;
+				console.log(getCountTreesOfAreaArray.length);
+			}
+		});	
+	}
+
+	// function returnLoadedSpeciesCountOfTress(data) {
+	// 	return data;
+	// }
     
 	function getTreesByArea(area){
 			$.ajax({
@@ -624,7 +596,6 @@ while ($row = mysqli_fetch_assoc($result))
 			dataType:'html',
 			beforeSend: function(){
 				console.log("Идет загрузка...");
-				$('#loadingModal').modal('show');
 			},
 			success:function(data){
 				// startFrom+=501;
@@ -632,7 +603,6 @@ while ($row = mysqli_fetch_assoc($result))
 				data1 = JSON.parse(data);
 				console.log(data);
 				loadSpeciesOfTrees1(data1);
-				$('#loadingModal').modal('hide');
 
 			}
 			});	
@@ -672,7 +642,7 @@ while ($row = mysqli_fetch_assoc($result))
 			type:'post',
 			cache:false,
 			data:{
-				'insert_new_tree': 'insert_new_tree',
+				'insert_new_tree_2': 'insert_new_tree_2',
 				'lat': newLat,
 				'lon': newLon,
 				'specie': newSpecie,
@@ -1051,53 +1021,24 @@ while ($row = mysqli_fetch_assoc($result))
 	function convertDataForHintBalloon(data) {
 		var id = "id: " + data["id"] + " <br>";
 		var specie = "Тип: " + data["specie"] + " <br>";
-		// var contractor = "Подрядчик: " + data["contractor"] + " <br>";
+		var contractor = "Подрядчик: " + data["contractor"] + " <br>";
 		var property = "Категория: " + data["property"] + " <br>";
 		var areaName = "Место: " + data["areaName"] + " <br>";
-		// var status = "Статус: " + data["status"] + " <br>";
-		var lifeStatus = "Жизненное состояние: " + data["sostoyanie"] + " <br>";
 		var poliv = "Полив: " + data["poliv"] + " <br>";
+		var status = "Статус: " + data["status"] + " <br>";
+		var lifeStatus = "Жизненное состояние: " + data["sostoyanie"] + " <br>";
 
-		var treeInfo = id + " " + specie + " " + " " + property + " " + areaName + " " + lifeStatus + " " +  poliv;
+		var treeInfo = id + " " + specie + " " + contractor + " " + property + " " + areaName + " " + poliv + " " + status + " " + lifeStatus;
 
 		return treeInfo;
 	}
 
-	function convertDataSpeciesForAreaBalloon(dataSpecieByArea, dataSpecieCount) {
-		var areaSpecieInfo = dataSpecieByArea["specie"] + ": " +  dataSpecieCount["specieCount"] + " <br>";
-		treeNumbers+=parseInt(dataSpecieCount["specieCount"]);
+	function convertDataSpeciesForAreaBalloon(dataSpecieGrouped) {
+		var areaSpecieInfo = dataSpecieGrouped["specie"] + ": " +  dataSpecieGrouped["countSpecie"] + " <br>";
+
 		return areaSpecieInfo;
 	}
 
-	async function getCountTreesOfArea(area) {
-		await $.ajax({
-			url:'php/requests.php',
-			type:'post',
-			cache:false,
-			data:{
-				'countTreesByArea': 'countTreesByArea',
-				'area': area
-			},
-			dataType:'html',
-			beforeSend: function(){
-				console.log("Идет загрузка...");
-				$('#loadingModal').modal('show');
-			},
-			success:function(data){
-				// startFrom+=501;
-
-				$('#loadingModal').modal('hide');
-
-				data1 = JSON.parse(data);
-				console.log(data);
-				// returnLoadedSpeciesCountOfTress(data1);
-
-				getCountTreesOfAreaArray = data1;
-				console.log(getCountTreesOfAreaArray.length);
-
-			}
-		});	
-	}
 
 
 	function ListDistinctAreaNames() {
